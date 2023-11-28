@@ -21,19 +21,6 @@ pip install -r requirements.txt .
 Usage .
 Edit the config.json file to set up your rules for file organization.
 
-  {
-    "rules": [
-      {
-        "file_type": "txt",
-        "destination_folder": "Documents"
-      },
-      {
-        "file_type": "jpg",
-        "destination_folder": "Images"
-      }
-      // Add more rules as needed
-    ]
-  }
 Run the script:
 
 python desktop_cleaner.py
