@@ -1,0 +1,37 @@
+{
+    "rules": [
+      {
+        "file_type": "txt",
+        "destination_folder": "Documents"
+      },
+      {
+        "file_type": "jpg",
+        "destination_folder": "Images"
+      },
+      {
+        "file_type": "pdf",
+        "destination_folder": "PDFs"
+      },
+      {
+        "file_type": "mp3",
+        "destination_folder": "Music"
+      },
+      {
+        "file_type": "docx",
+        "destination_folder": "Documents/Word"
+      },
+      {
+        "file_type": "xlsx",
+        "destination_folder": "Documents/Excel"
+      },
+      {
+        "file_type": "mkv",
+        "destination_folder": "videos"
+      },
+      {
+        "file_type": "mp4",
+        "destination_folder": "videos"
+      }
+    ]
+  }
+  
