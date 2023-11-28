@@ -17,8 +17,8 @@ Change to the project directory:
 cd desktop-cleaner
 Install dependencies:
 
-pip install -r requirements.txt
-Usage
+pip install -r requirements.txt .
+Usage .
 Edit the config.json file to set up your rules for file organization.
 
   {
