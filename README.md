@@ -10,24 +10,16 @@ Python installed on your system.
 Installation
 Clone the repository:
 
-bash
-Copy code
 git clone https://github.com/your-username/desktop-cleaner.git
 Change to the project directory:
 
-bash
-Copy code
 cd desktop-cleaner
 Install dependencies:
 
-bash
-Copy code
 pip install -r requirements.txt
 Usage
 Edit the config.json file to set up your rules for file organization.
 
-json
-Copy code
 {
   "rules": [
     {
@@ -43,8 +35,6 @@ Copy code
 }
 Run the script:
 
-bash
-Copy code
 python desktop_cleaner.py
 # Configuration
 Rules: Define rules in the config.json file. Each rule consists of a file type and the destination folder.
