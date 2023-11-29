@@ -7,7 +7,8 @@ Overview The Automatic Desktop Cleaner is a script that helps you organize and c
 
 # Prerequisites
  - Python installed on your system.
- - Installation
+ - 
+# Installation
 * Clone the repository:
 
   git clone https://github.com/Joeltabe/Automatic-Desktop-Cleaner.git .
@@ -18,7 +19,8 @@ Overview The Automatic Desktop Cleaner is a script that helps you organize and c
 * Install dependencies:
 
   - pip install -r requirements.txt
-* Usage .
+
+ # Usage 
   - Edit the config.json file to set up your rules for file organization.
 
 Run the script:
