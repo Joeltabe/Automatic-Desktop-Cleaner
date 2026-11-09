@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Desktop Cleaner</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app" class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M3 12h12M3 17h8"/><path d="M19 15l2 2-4 4"/></svg>
+      </div>
+      <div>
+        <div class="brand-name">Desktop Cleaner</div>
+        <div class="brand-sub" id="versionLabel">v2</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <button class="nav-item active" data-view="dashboard">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/><rect x="13" y="10" width="8" height="11" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/></svg>
+        <span>Dashboard</span>
+      </button>
+      <div class="nav-label">Organise</div>
+      <button class="nav-item" data-view="preview">
+        <svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+        <span>Preview &amp; Clean</span>
+        <span class="nav-badge" id="previewBadge" hidden>0</span>
+      </button>
+      <button class="nav-item" data-view="rules">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"/><circle cx="18" cy="16" r="3"/></svg>
+        <span>Rules</span>
+      </button>
+      <button class="nav-item" data-view="history">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        <span>History</span>
+      </button>
+      <div class="nav-label">Free up space</div>
+      <button class="nav-item" data-view="space">
+        <svg viewBox="0 0 24 24"><path d="M4 4h16v8H4zM4 12h16v8H4z"/><circle cx="8" cy="8" r="1"/><circle cx="8" cy="16" r="1"/></svg>
+        <span>Space</span>
+        <span class="nav-badge soft" id="spaceBadge" hidden></span>
+      </button>
+      <button class="nav-item" data-view="map">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 12h10M13 3v18M13 12h8M17 12v9"/></svg>
+        <span>Storage map</span>
+      </button>
+      <button class="nav-item" data-view="dupes">
+        <svg viewBox="0 0 24 24"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg>
+        <span>Duplicates</span>
+      </button>
+      <div class="nav-label">App</div>
+      <button class="nav-item" data-view="settings">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+        <span>Settings</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="watch-card" id="watchCard">
+        <div class="watch-row">
+          <div>
+            <div class="watch-title">Watch mode</div>
+            <div class="watch-sub" id="watchSub">Off</div>
+          </div>
+          <label class="switch" title="Organise automatically as files appear">
+            <input type="checkbox" id="watchToggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+      <button class="theme-btn" id="themeBtn" title="Toggle theme">
+        <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- ============================================================ DASHBOARD -->
+    <section class="view active" id="view-dashboard">
+      <header class="view-head">
+        <div>
+          <h1>Good <span id="greetTime">day</span>.</h1>
+          <p class="muted" id="dashSubtitle">Here is how tidy things are.</p>
+        </div>
+        <div class="head-actions">
+          <button class="btn btn-primary btn-lg" id="dashCleanBtn">
+            <svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+            Preview &amp; Clean
+          </button>
+        </div>
+      </header>
+
+      <div class="stat-grid">
+        <div class="stat-card accent-a">
+          <div class="stat-label">Files organised</div>
+          <div class="stat-value" id="statFiles" data-count="0">0</div>
+          <div class="stat-foot" id="statFilesFoot">lifetime</div>
+        </div>
+        <div class="stat-card accent-b">
+          <div class="stat-label">Space tidied</div>
+          <div class="stat-value" id="statBytes">0 B</div>
+          <div class="stat-foot">across all runs</div>
+        </div>
+        <div class="stat-card accent-c">
+          <div class="stat-label">Runs</div>
+          <div class="stat-value" id="statRuns" data-count="0">0</div>
+          <div class="stat-foot" id="statRunsFoot">0 undone</div>
+        </div>
+        <div class="stat-card accent-d">
+          <div class="stat-label">Streak</div>
+          <div class="stat-value"><span id="statStreak" data-count="0">0</span><span class="stat-unit">days</span></div>
+          <div class="stat-foot">consecutive tidy days</div>
+        </div>
+      </div>
+
+      <div class="grid-2 dash-space">
+        <div class="card">
+          <div class="card-head">
+            <h2>Drives</h2>
+            <button class="btn btn-ghost btn-sm" data-goto="map">Storage map</button>
+          </div>
+          <div id="dashDrives" class="drives"></div>
+        </div>
+        <div class="card space-promo" id="dashSpaceCard">
+          <div class="card-head">
+            <h2>Free up space</h2>
+            <button class="btn btn-ghost btn-sm" data-goto="space">Open</button>
+          </div>
+          <div id="dashSpaceBody" class="promo-body"></div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head">
+            <h2>Watched folders</h2>
+            <button class="btn btn-ghost btn-sm" data-goto="settings">Manage</button>
+          </div>
+          <div id="sourceCards" class="source-cards"></div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <h2>Activity</h2>
+            <span class="muted small">last 30 days</span>
+          </div>
+          <div class="chart-wrap"><canvas id="timelineChart" height="140"></canvas></div>
+          <div class="card-head" style="margin-top:14px">
+            <h2>By category</h2>
+          </div>
+          <div class="donut-row">
+            <canvas id="donutChart" width="140" height="140"></canvas>
+            <ul class="legend" id="donutLegend"></ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="lastRunCard" hidden>
+        <div class="card-head">
+          <h2>Last run</h2>
+          <button class="btn btn-ghost btn-sm" data-goto="history">All history</button>
+        </div>
+        <div class="lastrun" id="lastRunBody"></div>
+      </div>
+    </section>
+
+    <!-- ============================================================ PREVIEW -->
+    <section class="view" id="view-preview">
+      <header class="view-head">
+        <div>
+          <h1>Preview &amp; Clean</h1>
+          <p class="muted">Nothing moves until you say so. Untick anything you want to keep where it is.</p>
+        </div>
+        <div class="head-actions">
+          <button class="btn btn-ghost" id="refreshPreviewBtn">
+            <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>
+            Rescan
+          </button>
+          <button class="btn btn-primary btn-lg" id="runBtn" disabled>
+            <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            <span id="runBtnLabel">Move 0 files</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="progress" id="progress" hidden>
+        <div class="progress-bar" id="progressBar"></div>
+        <div class="progress-text" id="progressText"></div>
+      </div>
+
+      <div id="previewEmpty" class="empty" hidden>
+        <div class="empty-art">✨</div>
+        <h3>Everything is already tidy</h3>
+        <p class="muted">No files in your watched folders match a rule right now.</p>
+      </div>
+
+      <div id="previewMissing" class="notice warn" hidden></div>
+
+      <div class="preview-toolbar" id="previewToolbar" hidden>
+        <label class="check"><input type="checkbox" id="selectAll" checked><span>Select all</span></label>
+        <span class="muted" id="previewSummary"></span>
+      </div>
+      <div id="previewGroups" class="groups"></div>
+
+      <details class="skipped" id="skippedBox" hidden>
+        <summary><span id="skippedCount">0</span> items left alone <span class="muted">(click to see why)</span></summary>
+        <div id="skippedList" class="skipped-list"></div>
+      </details>
+    </section>
+
+    <!-- ============================================================ RULES -->
+    <section class="view" id="view-rules">
+      <header class="view-head">
+        <div>
+          <h1>Rules</h1>
+          <p class="muted">Top to bottom, first match wins. Drag the handle to reorder.</p>
+        </div>
+        <div class="head-actions">
+          <button class="btn btn-ghost" id="resetRulesBtn">Restore defaults</button>
+          <button class="btn btn-primary" id="addRuleBtn">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            New rule
+          </button>
+        </div>
+      </header>
+      <div id="rulesList" class="rules-list"></div>
+    </section>
+
+    <!-- ============================================================ HISTORY -->
+    <section class="view" id="view-history">
+      <header class="view-head">
+        <div>
+          <h1>History</h1>
+          <p class="muted">Every run is recorded so any of them can be undone.</p>
+        </div>
+        <div class="head-actions">
+          <button class="btn btn-ghost btn-danger-ghost" id="clearHistoryBtn">Clear history</button>
+        </div>
+      </header>
+      <div id="historyList" class="history-list"></div>
+    </section>
+
+    <!-- ============================================================ SPACE -->
+    <section class="view" id="view-space">
+      <header class="view-head">
+        <div>
+          <h1>Free up space</h1>
+          <p class="muted">Caches, leftovers and forgotten downloads, graded by how safe they are to remove. Nothing goes until you confirm.</p>
+        </div>
+        <div class="head-actions">
+          <button class="btn btn-ghost" id="spaceCancelBtn" hidden>Cancel</button>
+          <button class="btn btn-primary btn-lg" id="analyzeBtn">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <span id="analyzeBtnLabel">Analyse</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="drives drives-row" id="spaceDrives"></div>
+
+      <div class="hero" id="spaceHero">
+        <div class="hero-main">
+          <div class="hero-label" id="heroLabel">Ready when you are</div>
+          <div class="hero-value" id="heroValue">—</div>
+          <div class="hero-sub" id="heroSub">Press Analyse to look for space you can get back.</div>
+        </div>
+        <div class="hero-side" id="heroSide" hidden>
+          <div class="hero-chip safe"><b id="heroSafe">0 B</b><span>safe to delete</span></div>
+          <div class="hero-chip review"><b id="heroReview">0 B</b><span>worth a look</span></div>
+          <div class="hero-chip manual"><b id="heroManual">0 B</b><span>needs system tools</span></div>
+        </div>
+        <div class="hero-progress" id="heroProgress" hidden>
+          <div class="progress slim"><div class="progress-bar" id="analyzeBar"></div></div>
+          <div class="muted small" id="analyzeText">Starting…</div>
+        </div>
+      </div>
+
+      <div class="space-toolbar" id="spaceToolbar" hidden>
+        <div class="btn-row">
+          <button class="btn btn-ghost btn-sm" id="selSafeBtn">Select safe only</button>
+          <button class="btn btn-ghost btn-sm" id="selRecommendedBtn">Select recommended</button>
+          <button class="btn btn-ghost btn-sm" id="selAllBtn">Select everything removable</button>
+          <button class="btn btn-ghost btn-sm" id="selNoneBtn">Clear</button>
+        </div>
+        <span class="muted small" id="spaceMeta"></span>
+      </div>
+
+      <div id="junkGroups" class="junk-groups"></div>
+
+      <div class="empty" id="spaceEmpty" hidden>
+        <div class="empty-art">🧼</div>
+        <h3>Spotless</h3>
+        <p class="muted">Nothing removable was found. Come back in a few weeks.</p>
+      </div>
+
+      <div class="action-bar" id="spaceActionBar" hidden>
+        <div class="ab-main">
+          <div class="ab-value" id="abValue">0 B</div>
+          <div class="ab-sub" id="abSub">selected</div>
+        </div>
+        <label class="check" title="Review items normally go to the recycle bin so they can be restored">
+          <input type="checkbox" id="permanentToggle"><span>Skip the recycle bin</span>
+        </label>
+        <button class="btn btn-primary btn-lg" id="cleanBtn" disabled>
+          <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
+          <span id="cleanBtnLabel">Free up space</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ============================================================ STORAGE MAP -->
+    <section class="view" id="view-map">
+      <header class="view-head">
+        <div>
+          <h1>Storage map</h1>
+          <p class="muted">See what is actually taking the room. Click a block to dive in.</p>
+        </div>
+        <div class="head-actions path-actions">
+          <input type="text" id="mapPath" placeholder="Folder to scan" spellcheck="false">
+          <button class="btn btn-ghost" id="mapBrowseBtn">Browse…</button>
+          <button class="btn btn-ghost" id="mapCancelBtn" hidden>Cancel</button>
+          <button class="btn btn-primary" id="mapScanBtn">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            Scan
+          </button>
+        </div>
+      </header>
+
+      <div class="progress" id="mapProgress" hidden>
+        <div class="progress-bar indeterminate"></div>
+        <div class="progress-text" id="mapProgressText">Scanning…</div>
+      </div>
+
+      <div id="mapEmpty" class="empty">
+        <div class="empty-art">🗺️</div>
+        <h3>Scan a folder to map it</h3>
+        <p class="muted">Your home folder is a good start. Big folders take a little longer.</p>
+        <div class="btn-row center" id="mapQuick"></div>
+      </div>
+
+      <div id="mapBody" hidden>
+        <div class="map-summary" id="mapSummary"></div>
+        <div class="crumbs" id="mapCrumbs"></div>
+        <div class="map-layout">
+          <div class="card map-canvas-card">
+            <canvas id="treemap" height="420"></canvas>
+            <div class="treemap-tip" id="treemapTip" hidden></div>
+          </div>
+          <div class="card map-side">
+            <div class="tabs" id="mapTabs">
+              <button class="tab active" data-tab="folders">Folders</button>
+              <button class="tab" data-tab="files">Files here</button>
+              <button class="tab" data-tab="largest">Largest files</button>
+              <button class="tab" data-tab="types">By type</button>
+              <button class="tab" data-tab="age">By age</button>
+            </div>
+            <div class="tab-body" id="mapTabBody"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ DUPLICATES -->
+    <section class="view" id="view-dupes">
+      <header class="view-head">
+        <div>
+          <h1>Duplicates</h1>
+          <p class="muted">Byte-for-byte identical files. Keep one copy of each, send the rest to the recycle bin.</p>
+        </div>
+        <div class="head-actions">
+          <button class="btn btn-ghost" id="dupesCancelBtn" hidden>Cancel</button>
+          <button class="btn btn-primary btn-lg" id="dupesScanBtn">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            Find duplicates
+          </button>
+        </div>
+      </header>
+
+      <div class="card dupes-setup">
+        <div class="dupes-roots">
+          <span class="muted small">Look in</span>
+          <div class="chips" id="dupesRoots"></div>
+          <button class="btn btn-ghost btn-sm" id="dupesAddRootBtn">+ Add folder</button>
+        </div>
+        <label class="inline"><span class="muted small">Ignore files smaller than</span><input type="number" id="dupesMinMb" min="0" step="0.5" value="1"><span class="unit">MB</span></label>
+      </div>
+
+      <div class="progress" id="dupesProgress" hidden>
+        <div class="progress-bar" id="dupesBar"></div>
+        <div class="progress-text" id="dupesProgressText">Collecting files…</div>
+      </div>
+
+      <div id="dupesSummary" class="hero compact" hidden>
+        <div class="hero-main">
+          <div class="hero-label">Reclaimable</div>
+          <div class="hero-value" id="dupesValue">0 B</div>
+          <div class="hero-sub" id="dupesSub"></div>
+        </div>
+      </div>
+
+      <div id="dupesEmpty" class="empty" hidden>
+        <div class="empty-art">👯</div>
+        <h3>No duplicates</h3>
+        <p class="muted">Every file in those folders is one of a kind.</p>
+      </div>
+
+      <div id="dupesGroups" class="dupe-groups"></div>
+
+      <div class="action-bar" id="dupesActionBar" hidden>
+        <div class="ab-main">
+          <div class="ab-value" id="dupesAbValue">0 B</div>
+          <div class="ab-sub" id="dupesAbSub">in duplicates</div>
+        </div>
+        <button class="btn btn-primary btn-lg" id="dupesRemoveBtn">
+          <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
+          <span id="dupesRemoveLabel">Remove duplicates</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ============================================================ SETTINGS -->
+    <section class="view" id="view-settings">
+      <header class="view-head">
+        <div>
+          <h1>Settings</h1>
+          <p class="muted">Changes save automatically.</p>
+        </div>
+      </header>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head"><h2>Folders to keep tidy</h2>
+            <button class="btn btn-ghost btn-sm" id="addSourceBtn">+ Add folder</button></div>
+          <ul class="source-list" id="sourceList"></ul>
+          <p class="hint">Relative rule destinations (like <code>Images</code>) are created inside each of these folders.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>Behaviour</h2></div>
+          <div class="form">
+            <label class="field">
+              <span>When a file with the same name already exists</span>
+              <select id="optConflict">
+                <option value="rename">Keep both (add a number)</option>
+                <option value="skip">Skip the file</option>
+                <option value="overwrite">Replace the old one</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Leave files alone if modified in the last</span>
+              <div class="inline"><input type="number" id="optRecent" min="0" step="5"><span class="unit">seconds</span></div>
+            </label>
+            <label class="field">
+              <span>Watch mode scans every</span>
+              <div class="inline"><input type="number" id="optInterval" min="1" step="1"><span class="unit">seconds</span></div>
+            </label>
+            <label class="field">
+              <span>Files that match no rule go to <span class="muted">(leave empty to keep them)</span></span>
+              <input type="text" id="optUnmatched" placeholder="e.g. Other">
+            </label>
+            <label class="check big">
+              <input type="checkbox" id="optMoveFolders"><span>Also move folders that match a rule</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>Never touch</h2></div>
+          <p class="hint">One pattern per line. <code>*</code> matches anything. Shortcuts and system files are protected by default.</p>
+          <textarea id="optIgnore" rows="8" spellcheck="false"></textarea>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>Free up space</h2></div>
+          <div class="form">
+            <div class="row-3">
+              <label class="field"><span>Project idle after (days)</span><input type="number" id="spStale" min="0"></label>
+              <label class="field"><span>Installers older than (days)</span><input type="number" id="spInstaller" min="0"></label>
+              <label class="field"><span>Forgotten downloads (days)</span><input type="number" id="spOldDl" min="0"></label>
+            </div>
+            <div class="row-3">
+              <label class="field"><span>Large file (MB)</span><input type="number" id="spLarge" min="1"></label>
+              <label class="field"><span>Duplicate min size (MB)</span><input type="number" id="spDupMin" min="0" step="0.5"></label>
+            </div>
+            <label class="field">
+              <span>Where your projects live <span class="muted">(one per line, empty = auto-detect)</span></span>
+              <textarea id="spRoots" rows="3" spellcheck="false" placeholder="C:\Users\me\code"></textarea>
+            </label>
+            <label class="check big">
+              <input type="checkbox" id="spPermanent"><span>Delete "review" items permanently instead of using the recycle bin</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>Config file</h2></div>
+          <div class="kv"><span>Location</span><code id="configPathLabel"></code></div>
+          <div class="btn-row">
+            <button class="btn btn-ghost btn-sm" id="openConfigDirBtn">Open folder</button>
+            <button class="btn btn-ghost btn-sm" id="importBtn">Import…</button>
+            <button class="btn btn-ghost btn-sm" id="exportBtn">Export…</button>
+          </div>
+          <p class="hint" style="margin-top:14px">Command line: <code>desktop-cleaner run</code>, <code>desktop-cleaner undo</code>, <code>desktop-cleaner watch</code>.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ============================================================ RULE EDITOR MODAL -->
+<div class="modal-backdrop" id="ruleModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="ruleModalTitle">
+    <div class="modal-head">
+      <h2 id="ruleModalTitle">New rule</h2>
+      <button class="icon-btn" id="ruleModalClose" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="modal-body form">
+      <div class="row-2">
+        <label class="field"><span>Name</span><input type="text" id="rName" placeholder="Images"></label>
+        <label class="field"><span>Colour</span><input type="color" id="rColor" value="#6c8cff"></label>
+      </div>
+      <label class="field">
+        <span>Move to folder</span>
+        <input type="text" id="rDest" placeholder="Images  or  C:\Users\me\Pictures">
+        <small class="muted">Relative paths are inside the watched folder. Absolute paths and <code>~</code> work too.</small>
+      </label>
+      <label class="field">
+        <span>File extensions <span class="muted">(comma or space separated)</span></span>
+        <input type="text" id="rExt" placeholder="jpg, png, gif">
+      </label>
+      <label class="field">
+        <span>Name patterns <span class="muted">(optional, e.g. <code>Screenshot*</code>)</span></span>
+        <input type="text" id="rPatterns" placeholder="Screenshot*, Capture*">
+      </label>
+      <details class="advanced">
+        <summary>Advanced</summary>
+        <div class="form">
+          <label class="field"><span>Regular expression on the file name</span><input type="text" id="rRegex" placeholder="^invoice_\d+"></label>
+          <div class="row-3">
+            <label class="field"><span>Older than (days)</span><input type="number" id="rAge" min="0" value="0"></label>
+            <label class="field"><span>Min size (MB)</span><input type="number" id="rMin" min="0" step="0.1" placeholder="any"></label>
+            <label class="field"><span>Max size (MB)</span><input type="number" id="rMax" min="0" step="0.1" placeholder="any"></label>
+          </div>
+          <label class="field"><span>Sub-folders by date</span>
+            <select id="rDate">
+              <option value="none">None</option>
+              <option value="year">Year (2026)</option>
+              <option value="year-month">Year / Month (2026/03)</option>
+            </select>
+          </label>
+        </div>
+      </details>
+      <div class="notice" id="ruleError" hidden></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="ruleCancelBtn">Cancel</button>
+      <button class="btn btn-primary" id="ruleSaveBtn">Save rule</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ CLEAN CONFIRM MODAL -->
+<div class="modal-backdrop" id="cleanModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="cleanModalTitle">
+    <div class="modal-head">
+      <h2 id="cleanModalTitle">Free up space</h2>
+      <button class="icon-btn" id="cleanModalClose" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="modal-body" id="cleanModalBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="cleanCancelBtn">Cancel</button>
+      <button class="btn btn-primary" id="cleanConfirmBtn">Free up</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ CONFIRM MODAL -->
+<div class="modal-backdrop" id="confirmModal" hidden>
+  <div class="modal modal-sm" role="dialog" aria-modal="true">
+    <div class="modal-head"><h2 id="confirmTitle">Are you sure?</h2></div>
+    <div class="modal-body"><p id="confirmText"></p></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="confirmNo">Cancel</button>
+      <button class="btn btn-danger" id="confirmYes">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+<script src="app.js"></script>
+<script src="space.js"></script>
+</body>
+</html>
