@@ -1,4 +1,5 @@
 """Configuration model, defaults, persistence and migration from the v1 config.json."""
+
 from __future__ import annotations
 
 import json
@@ -47,7 +48,7 @@ class Match:
     min_size_mb: float | None = None
     max_size_mb: float | None = None
 
-    def normalized(self) -> "Match":
+    def normalized(self) -> Match:
         self.extensions = sorted({e.lower().lstrip(".").strip() for e in self.extensions if e and e.strip()})
         self.patterns = [p.strip() for p in self.patterns if p and p.strip()]
         self.regex = (self.regex or "").strip() or None
@@ -74,7 +75,7 @@ class Rule:
         extensions: list[str] | None = None,
         color: str = "#6c8cff",
         **match_kwargs: Any,
-    ) -> "Rule":
+    ) -> Rule:
         return Rule(
             id=uuid.uuid4().hex[:8],
             name=name,
@@ -89,8 +90,17 @@ class Options:
     conflict: str = "rename"
     ignore: list[str] = field(
         default_factory=lambda: [
-            "desktop.ini", "Thumbs.db", ".DS_Store", "*.lnk", "*.url", ".*",
-            "*.tmp", "*.crdownload", "*.part", "*.download", "~$*",
+            "desktop.ini",
+            "Thumbs.db",
+            ".DS_Store",
+            "*.lnk",
+            "*.url",
+            ".*",
+            "*.tmp",
+            "*.crdownload",
+            "*.part",
+            "*.download",
+            "~$*",
         ]
     )
     skip_recent_seconds: int = 30
@@ -104,15 +114,31 @@ class Options:
 @dataclass
 class SpaceOptions:
     """Settings for the free-up-space features (junk analysis, duplicates, storage map)."""
-    project_roots: list[str] = field(default_factory=list)      # empty = auto-detect common code folders
+
+    project_roots: list[str] = field(default_factory=list)  # empty = auto-detect common code folders
     stale_project_days: int = 60
     installer_age_days: int = 30
     large_file_mb: int = 100
     old_download_days: int = 90
-    duplicate_roots: list[str] = field(default_factory=list)    # empty = sources + Documents/Pictures
+    duplicate_roots: list[str] = field(default_factory=list)  # empty = sources + Documents/Pictures
     duplicate_min_mb: float = 1.0
-    exclude: list[str] = field(default_factory=lambda: [".git", "node_modules", ".venv", "venv", "__pycache__", "$RECYCLE.BIN", "System Volume Information", "Windows", "Program Files", "Program Files (x86)", "ProgramData", "AppData"])
-    permanent_delete: bool = False                              # default: review items go to the recycle bin
+    exclude: list[str] = field(
+        default_factory=lambda: [
+            ".git",
+            "node_modules",
+            ".venv",
+            "venv",
+            "__pycache__",
+            "$RECYCLE.BIN",
+            "System Volume Information",
+            "Windows",
+            "Program Files",
+            "Program Files (x86)",
+            "ProgramData",
+            "AppData",
+        ]
+    )
+    permanent_delete: bool = False  # default: review items go to the recycle bin
 
 
 @dataclass
@@ -132,10 +158,16 @@ class Config:
 
 # --------------------------------------------------------------------------- defaults
 
+
 def default_rules() -> list[Rule]:
     return [
-        Rule.new("Screenshots", "Images/Screenshots", ["png", "jpg", "jpeg"], "#ff9a7a",
-                 patterns=["Screenshot*", "Capture*", "Screen Shot*", "Snip*"]),
+        Rule.new(
+            "Screenshots",
+            "Images/Screenshots",
+            ["png", "jpg", "jpeg"],
+            "#ff9a7a",
+            patterns=["Screenshot*", "Capture*", "Screen Shot*", "Snip*"],
+        ),
         Rule.new("Images", "Images", ["jpg", "jpeg", "png", "gif", "webp", "bmp", "heic", "svg", "tiff", "ico"], "#ff7a9a"),
         Rule.new("PDFs", "Documents/PDFs", ["pdf"], "#ff6b6b"),
         Rule.new("Documents", "Documents", ["doc", "docx", "odt", "rtf", "txt", "md", "pages"], "#6c8cff"),
@@ -145,7 +177,9 @@ def default_rules() -> list[Rule]:
         Rule.new("Music", "Music", ["mp3", "wav", "flac", "aac", "ogg", "m4a"], "#38bdf8"),
         Rule.new("Archives", "Archives", ["zip", "rar", "7z", "tar", "gz", "bz2", "xz"], "#a3a3a3"),
         Rule.new("Installers", "Installers", ["exe", "msi", "dmg", "pkg", "deb", "rpm", "appimage", "apk"], "#f472b6"),
-        Rule.new("Code", "Code", ["py", "js", "ts", "html", "css", "json", "java", "c", "cpp", "cs", "go", "rs", "sh", "sql", "ipynb"], "#34d399"),
+        Rule.new(
+            "Code", "Code", ["py", "js", "ts", "html", "css", "json", "java", "c", "cpp", "cs", "go", "rs", "sh", "sql", "ipynb"], "#34d399"
+        ),
         Rule.new("3D & Design", "Design", ["glb", "gltf", "obj", "fbx", "blend", "stl", "psd", "ai", "fig", "drawio", "sketch"], "#fbbf24"),
         Rule.new("Fonts", "Fonts", ["ttf", "otf", "woff", "woff2"], "#e879f9"),
         Rule.new("Subtitles & Data", "Documents/Misc", ["srt", "vtt", "xml", "yaml", "yml", "log"], "#94a3b8"),
@@ -157,6 +191,7 @@ def default_config() -> Config:
 
 
 # --------------------------------------------------------------------------- (de)serialisation
+
 
 def config_to_dict(cfg: Config) -> dict[str, Any]:
     return asdict(cfg)
@@ -222,8 +257,7 @@ def migrate_legacy(data: dict[str, Any]) -> Config:
             grouped.setdefault(dest, []).append(ext)
     palette = ["#6c8cff", "#ff7a9a", "#3ddc84", "#ffb347", "#c084fc", "#38bdf8", "#f472b6", "#34d399"]
     rules = [
-        Rule.new(dest.replace("/", " / ").title(), dest, exts, palette[i % len(palette)])
-        for i, (dest, exts) in enumerate(grouped.items())
+        Rule.new(dest.replace("/", " / ").title(), dest, exts, palette[i % len(palette)]) for i, (dest, exts) in enumerate(grouped.items())
     ]
     return Config(rules=rules)
 

@@ -1,4 +1,5 @@
 """Execute a clean-up selection and keep a log of every clean for statistics."""
+
 from __future__ import annotations
 
 import json
@@ -6,10 +7,11 @@ import os
 import time
 import uuid
 from collections import Counter, defaultdict
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Callable, Iterator
+from typing import Any
 
 from ..config import config_dir
 from .common import Cancel, ProgressFn, Throttle
@@ -32,8 +34,15 @@ class CleanResult:
     duration: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
-        return {"clean_id": self.clean_id, "freed": self.freed, "removed": self.removed, "failed": self.failed,
-                "by_group": self.by_group, "modes": dict(self.modes), "duration": round(self.duration, 2)}
+        return {
+            "clean_id": self.clean_id,
+            "freed": self.freed,
+            "removed": self.removed,
+            "failed": self.failed,
+            "by_group": self.by_group,
+            "modes": dict(self.modes),
+            "duration": round(self.duration, 2),
+        }
 
 
 def mode_for(group: JunkGroup, item: JunkItem, permanent_review: bool) -> str:
@@ -46,9 +55,16 @@ def mode_for(group: JunkGroup, item: JunkItem, permanent_review: bool) -> str:
     return "skip"
 
 
-def execute(analysis: Analysis, groups_all: list[str], paths: list[str], permanent_review: bool = False,
-            progress: ProgressFn | None = None, cancel: Cancel | None = None, log: "SpaceLog | None" = None,
-            trigger: str = "gui") -> CleanResult:
+def execute(
+    analysis: Analysis,
+    groups_all: list[str],
+    paths: list[str],
+    permanent_review: bool = False,
+    progress: ProgressFn | None = None,
+    cancel: Cancel | None = None,
+    log: SpaceLog | None = None,
+    trigger: str = "gui",
+) -> CleanResult:
     """Remove the selection. ``groups_all`` are whole groups, ``paths`` are individual items from any group."""
     t0 = time.monotonic()
     emit = Throttle(progress, 0.05)
@@ -76,14 +92,19 @@ def execute(analysis: Analysis, groups_all: list[str], paths: list[str], permane
         if cancel is not None:
             cancel.check()
         mode = mode_for(g, item, permanent_review)
-        emit({"phase": "clean", "index": i + 1, "total": total, "name": item.name or os.path.basename(item.path), "freed": result.freed}, force=i == 0)
+        emit(
+            {"phase": "clean", "index": i + 1, "total": total, "name": item.name or os.path.basename(item.path), "freed": result.freed},
+            force=i == 0,
+        )
         if mode == "skip":
             continue
         if mode == "empty_bin":
             before, _ = recycle_bin_info()
             ok = empty_recycle_bin()
             after, _ = recycle_bin_info()
-            res = RemoveResult(removed=[item.path] if ok else [], failed=[] if ok else [(item.path, "could not empty")], freed=max(0, before - after))
+            res = RemoveResult(
+                removed=[item.path] if ok else [], failed=[] if ok else [(item.path, "could not empty")], freed=max(0, before - after)
+            )
             apply(res, g, mode)
         elif mode == "contents":
             apply(clear_directory_contents(item.path), g, mode)
@@ -107,21 +128,28 @@ def execute(analysis: Analysis, groups_all: list[str], paths: list[str], permane
     return result
 
 
-def remove_paths(paths: list[str], permanent: bool = False, log: "SpaceLog | None" = None, label: str = "files",
-                 trigger: str = "gui") -> CleanResult:
+def remove_paths(
+    paths: list[str], permanent: bool = False, log: SpaceLog | None = None, label: str = "files", trigger: str = "gui"
+) -> CleanResult:
     """Used by the storage map and duplicates screens: remove arbitrary paths, recycle bin by default."""
     t0 = time.monotonic()
     res = delete_permanently(paths) if permanent else send_to_trash(paths)
-    result = CleanResult(clean_id=uuid.uuid4().hex[:10], freed=res.freed, removed=len(res.removed),
-                         failed=[{"path": p, "error": e, "group": label} for p, e in res.failed],
-                         by_group={label: res.freed}, modes=Counter({"delete" if permanent else "trash": len(res.removed)}),
-                         duration=time.monotonic() - t0)
+    result = CleanResult(
+        clean_id=uuid.uuid4().hex[:10],
+        freed=res.freed,
+        removed=len(res.removed),
+        failed=[{"path": p, "error": e, "group": label} for p, e in res.failed],
+        by_group={label: res.freed},
+        modes=Counter({"delete" if permanent else "trash": len(res.removed)}),
+        duration=time.monotonic() - t0,
+    )
     if log is not None:
         log.append(result, trigger=trigger, titles={label: label.replace("_", " ").title()})
     return result
 
 
 # --------------------------------------------------------------------------- history / stats
+
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
@@ -136,9 +164,16 @@ class SpaceLog:
     def append(self, result: CleanResult, trigger: str, titles: dict[str, str]) -> None:
         if result.freed <= 0 and result.removed <= 0:
             return
-        rec = {"type": "clean", "clean_id": result.clean_id, "timestamp": _now_iso(), "trigger": trigger,
-               "freed": result.freed, "removed": result.removed, "failed": len(result.failed),
-               "groups": [{"id": gid, "title": titles.get(gid, gid), "freed": b} for gid, b in result.by_group.items()]}
+        rec = {
+            "type": "clean",
+            "clean_id": result.clean_id,
+            "timestamp": _now_iso(),
+            "trigger": trigger,
+            "freed": result.freed,
+            "removed": result.removed,
+            "failed": len(result.failed),
+            "groups": [{"id": gid, "title": titles.get(gid, gid), "freed": b} for gid, b in result.by_group.items()],
+        }
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self.path.open("a", encoding="utf-8") as fh:
             fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
@@ -179,12 +214,28 @@ class SpaceLog:
             per_day[d] += r.get("freed", 0)
         last = recs[-1] if recs else None
         return {
-            "freed_total": total, "cleans": len(recs), "removed_total": sum(r.get("removed", 0) for r in recs),
+            "freed_total": total,
+            "cleans": len(recs),
+            "removed_total": sum(r.get("removed", 0) for r in recs),
             "by_group": sorted(by_group.values(), key=lambda x: -x["freed"]),
             "timeline": [{"date": d.isoformat(), "freed": per_day.get(d, 0)} for d in window],
-            "last_clean": None if last is None else {"timestamp": last.get("timestamp"), "freed": last.get("freed", 0),
-                                                     "removed": last.get("removed", 0), "trigger": last.get("trigger")},
-            "recent": [{"timestamp": r.get("timestamp"), "freed": r.get("freed", 0), "removed": r.get("removed", 0),
-                        "failed": r.get("failed", 0), "trigger": r.get("trigger"), "groups": r.get("groups", [])}
-                       for r in reversed(recs[-25:])],
+            "last_clean": None
+            if last is None
+            else {
+                "timestamp": last.get("timestamp"),
+                "freed": last.get("freed", 0),
+                "removed": last.get("removed", 0),
+                "trigger": last.get("trigger"),
+            },
+            "recent": [
+                {
+                    "timestamp": r.get("timestamp"),
+                    "freed": r.get("freed", 0),
+                    "removed": r.get("removed", 0),
+                    "failed": r.get("failed", 0),
+                    "trigger": r.get("trigger"),
+                    "groups": r.get("groups", []),
+                }
+                for r in reversed(recs[-25:])
+            ],
         }

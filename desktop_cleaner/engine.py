@@ -1,11 +1,13 @@
 """Planning (dry run) and applying moves, with conflict handling and journaling."""
+
 from __future__ import annotations
 
 import os
 import shutil
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from .config import Config, Rule
 from .journal import Batch, Journal, MoveRecord, now_iso
@@ -15,7 +17,7 @@ from .rules import FileInfo, first_matching_rule, is_ignored, resolve_destinatio
 @dataclass
 class Action:
     source: str
-    destination: str          # planned full destination path (before conflict resolution)
+    destination: str  # planned full destination path (before conflict resolution)
     rule_id: str
     rule_name: str
     rule_color: str
@@ -93,6 +95,7 @@ class ApplyResult:
 
 # --------------------------------------------------------------------------- planning
 
+
 def _unmatched_rule(cfg: Config) -> Rule | None:
     dest = cfg.options.unmatched_destination
     if not dest:
@@ -113,8 +116,7 @@ def build_plan(cfg: Config) -> Plan:
             continue
         # Destination folders that live inside the source must never be moved themselves.
         protected_dirs = {
-            resolve_destination_dir(r.destination, "none", source_dir).resolve()
-            for r in rules + ([catch_all] if catch_all else [])
+            resolve_destination_dir(r.destination, "none", source_dir).resolve() for r in rules + ([catch_all] if catch_all else [])
         }
         try:
             entries = sorted(source_dir.iterdir(), key=lambda p: p.name.lower())
@@ -156,8 +158,13 @@ def build_plan(cfg: Config) -> Plan:
                 continue
             plan.actions.append(
                 Action(
-                    source=str(entry), destination=str(dest_dir / info.name), rule_id=rule.id,
-                    rule_name=rule.name, rule_color=rule.color, size=info.size, mtime=info.mtime,
+                    source=str(entry),
+                    destination=str(dest_dir / info.name),
+                    rule_id=rule.id,
+                    rule_name=rule.name,
+                    rule_color=rule.color,
+                    size=info.size,
+                    mtime=info.mtime,
                     source_dir=str(source_dir),
                 )
             )
@@ -165,6 +172,7 @@ def build_plan(cfg: Config) -> Plan:
 
 
 # --------------------------------------------------------------------------- applying
+
 
 def resolve_conflict(dest: Path, strategy: str) -> Path | None:
     """Return the path to write to, or None when the move should be skipped."""
@@ -225,8 +233,14 @@ def apply_plan(
             result.failed.append((action, exc.strerror or str(exc)))
             continue
         batch.moves.append(
-            MoveRecord(src=str(src), dest=str(final), rule_id=action.rule_id, rule_name=action.rule_name,
-                       size=action.size, renamed=final != planned)
+            MoveRecord(
+                src=str(src),
+                dest=str(final),
+                rule_id=action.rule_id,
+                rule_name=action.rule_name,
+                size=action.size,
+                renamed=final != planned,
+            )
         )
         if progress:
             progress(index, total, action)

@@ -1,4 +1,5 @@
 """Aggregate statistics derived from the journal."""
+
 from __future__ import annotations
 
 from collections import Counter, defaultdict
@@ -50,14 +51,17 @@ def summarize(journal: Journal, days: int = 30) -> dict[str, Any]:
         "bytes_moved": size,
         "runs": len(batches),
         "undone_runs": sum(1 for b in all_batches if b.undone),
-        "by_rule": [
-            {"rule": name, "files": count, "bytes": bytes_by_rule[name]}
-            for name, count in by_rule.most_common()
-        ],
+        "by_rule": [{"rule": name, "files": count, "bytes": bytes_by_rule[name]} for name, count in by_rule.most_common()],
         "timeline": timeline,
         "streak_days": streak,
-        "last_run": None if last is None else {
-            "batch_id": last.batch_id, "timestamp": last.timestamp, "files": len(last.moves),
-            "bytes": last.bytes_moved, "undone": last.undone, "trigger": last.trigger,
+        "last_run": None
+        if last is None
+        else {
+            "batch_id": last.batch_id,
+            "timestamp": last.timestamp,
+            "files": len(last.moves),
+            "bytes": last.bytes_moved,
+            "undone": last.undone,
+            "trigger": last.trigger,
         },
     }
