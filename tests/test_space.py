@@ -31,6 +31,7 @@ def _age(path: Path, days_old: float) -> None:
 
 # --------------------------------------------------------------------------- config
 
+
 def test_space_options_roundtrip():
     cfg = default_config()
     cfg.space.stale_project_days = 10
@@ -41,6 +42,7 @@ def test_space_options_roundtrip():
 
 
 # --------------------------------------------------------------------------- scanner
+
 
 def test_scan_tree_sizes_and_largest(tmp_path: Path):
     _write(tmp_path / "a" / "big.mp4", 5000)
@@ -70,6 +72,7 @@ def test_scan_tree_cancel(tmp_path: Path):
 
 # --------------------------------------------------------------------------- duplicates
 
+
 def test_find_duplicates_groups_identical_files_only(tmp_path: Path):
     payload = os.urandom(200_000)
     _write(tmp_path / "x" / "one.bin", 0, days_old=10, content=payload)
@@ -86,6 +89,7 @@ def test_find_duplicates_groups_identical_files_only(tmp_path: Path):
 
 
 # --------------------------------------------------------------------------- trash / cleaner
+
 
 def test_delete_permanently_handles_readonly(tmp_path: Path):
     f = _write(tmp_path / "ro" / "locked.txt", 10)
@@ -175,6 +179,7 @@ def test_remove_paths_permanent_logs(tmp_path: Path):
 
 
 # --------------------------------------------------------------------------- misc
+
 
 def test_category_and_dir_size(tmp_path: Path):
     assert category_of("movie.MKV") == "Video" and category_of("weird.xyz") == "Other" and category_of("noext") == "Other"
