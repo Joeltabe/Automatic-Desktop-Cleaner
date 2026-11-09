@@ -1,14 +1,16 @@
 """Append-only JSON-lines journal of every move, powering undo and statistics."""
+
 from __future__ import annotations
 
 import json
 import os
 import shutil
 import uuid
+from collections.abc import Iterator
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 
 from .config import journal_path
 
@@ -33,7 +35,7 @@ class Batch:
     timestamp: str
     sources: list[str]
     moves: list[MoveRecord] = field(default_factory=list)
-    trigger: str = "manual"        # manual | watch | cli | gui
+    trigger: str = "manual"  # manual | watch | cli | gui
     undone: bool = False
     undone_at: str | None = None
 
@@ -42,7 +44,7 @@ class Batch:
         return sum(m.size for m in self.moves)
 
     @staticmethod
-    def new(sources: list[str], trigger: str = "manual") -> "Batch":
+    def new(sources: list[str], trigger: str = "manual") -> Batch:
         return Batch(batch_id=uuid.uuid4().hex[:10], timestamp=now_iso(), sources=sources, trigger=trigger)
 
     def to_dict(self) -> dict[str, Any]:
@@ -51,11 +53,15 @@ class Batch:
         return d
 
     @staticmethod
-    def from_dict(d: dict[str, Any]) -> "Batch":
+    def from_dict(d: dict[str, Any]) -> Batch:
         moves = [MoveRecord(**{k: v for k, v in m.items() if k in MoveRecord.__dataclass_fields__}) for m in d.get("moves", [])]
         return Batch(
-            batch_id=d["batch_id"], timestamp=d.get("timestamp", ""), sources=list(d.get("sources", [])),
-            moves=moves, trigger=d.get("trigger", "manual"), undone=bool(d.get("undone", False)),
+            batch_id=d["batch_id"],
+            timestamp=d.get("timestamp", ""),
+            sources=list(d.get("sources", [])),
+            moves=moves,
+            trigger=d.get("trigger", "manual"),
+            undone=bool(d.get("undone", False)),
             undone_at=d.get("undone_at"),
         )
 
@@ -162,8 +168,7 @@ class Journal:
             except OSError:
                 pass
 
-        self._append({"type": "undo", "batch_id": batch.batch_id, "timestamp": now_iso(),
-                      "restored": len(restored), "failed": len(failed)})
+        self._append({"type": "undo", "batch_id": batch.batch_id, "timestamp": now_iso(), "restored": len(restored), "failed": len(failed)})
         return UndoResult(batch_id=batch.batch_id, restored=restored, failed=failed)
 
     def clear(self) -> None:
