@@ -1,9 +1,9 @@
 """Polling watch mode: organise new files as they settle, using only the standard library."""
+
 from __future__ import annotations
 
 import threading
-import time
-from typing import Callable
+from collections.abc import Callable
 
 from .config import Config
 from .engine import ApplyResult, Plan, apply_plan, build_plan
@@ -21,8 +21,14 @@ class Watcher:
     has been quiet long enough.
     """
 
-    def __init__(self, cfg: Config, journal: Journal | None = None, interval: float | None = None,
-                 on_batch: OnBatch | None = None, on_tick: OnTick | None = None):
+    def __init__(
+        self,
+        cfg: Config,
+        journal: Journal | None = None,
+        interval: float | None = None,
+        on_batch: OnBatch | None = None,
+        on_tick: OnTick | None = None,
+    ):
         self.cfg = cfg
         self.journal = journal
         self.interval = float(interval or cfg.options.watch_interval_seconds)
