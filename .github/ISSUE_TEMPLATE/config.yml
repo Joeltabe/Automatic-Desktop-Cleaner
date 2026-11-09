@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Question or idea
+    url: https://github.com/Joeltabe/Automatic-Desktop-Cleaner/discussions
+    about: Discussions are the place for questions and ideas that are not yet a concrete issue.
