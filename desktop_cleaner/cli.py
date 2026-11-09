@@ -1,4 +1,5 @@
 """Command line interface."""
+
 from __future__ import annotations
 
 import argparse
@@ -8,8 +9,7 @@ import time
 from pathlib import Path
 
 from . import __version__
-from .config import (Config, config_to_dict, default_config_path, ensure_config, journal_path,
-                     load_config, save_config)
+from .config import Config, config_to_dict, default_config_path, ensure_config, load_config, save_config
 from .engine import ApplyResult, Plan, apply_plan, build_plan
 from .journal import Journal
 from .rules import human_size
@@ -25,12 +25,28 @@ def c(text: str, code: str) -> str:
     return f"\033[{code}m{text}\033[0m" if USE_COLOR else text
 
 
-def bold(t: str) -> str: return c(t, "1")
-def dim(t: str) -> str: return c(t, "2")
-def green(t: str) -> str: return c(t, "32")
-def yellow(t: str) -> str: return c(t, "33")
-def red(t: str) -> str: return c(t, "31")
-def cyan(t: str) -> str: return c(t, "36")
+def bold(t: str) -> str:
+    return c(t, "1")
+
+
+def dim(t: str) -> str:
+    return c(t, "2")
+
+
+def green(t: str) -> str:
+    return c(t, "32")
+
+
+def yellow(t: str) -> str:
+    return c(t, "33")
+
+
+def red(t: str) -> str:
+    return c(t, "31")
+
+
+def cyan(t: str) -> str:
+    return c(t, "36")
 
 
 def print_plan(plan: Plan, show_skipped: bool = False) -> None:
@@ -69,6 +85,7 @@ def print_result(result: ApplyResult) -> None:
 
 
 # ----------------------------------------------------------------------------- commands
+
 
 def _load(args: argparse.Namespace) -> Config:
     path = Path(args.config) if args.config else None
@@ -119,8 +136,12 @@ def cmd_undo(args: argparse.Namespace) -> int:
         print(red(str(exc)))
         return 1
     if args.json:
-        print(json.dumps({"batch_id": res.batch_id, "restored": len(res.restored), "failed": [
-            {"file": m.dest, "error": e} for m, e in res.failed]}, indent=2))
+        print(
+            json.dumps(
+                {"batch_id": res.batch_id, "restored": len(res.restored), "failed": [{"file": m.dest, "error": e} for m, e in res.failed]},
+                indent=2,
+            )
+        )
         return 0 if res.ok else 2
     print(green(f"Restored {len(res.restored)} file(s) from batch {res.batch_id}."))
     for m, err in res.failed:
@@ -137,7 +158,7 @@ def cmd_history(args: argparse.Namespace) -> int:
     if not batches:
         print(dim("No history yet."))
         return 0
-    for b in reversed(batches[-args.limit:]):
+    for b in reversed(batches[-args.limit :]):
         status = yellow("undone") if b.undone else green("applied")
         print(f"{bold(b.batch_id)}  {b.timestamp}  {status}  {len(b.moves)} file(s)  {human_size(b.bytes_moved)}  {dim(b.trigger)}")
         if args.verbose:
@@ -204,6 +225,7 @@ def cmd_config(args: argparse.Namespace) -> int:
             return 1
         if not created:
             from .config import default_config
+
             save_config(default_config(), p)
         print(green(f"Wrote default config to {p}"))
         return 0
@@ -239,8 +261,10 @@ def _print_volumes(volumes: list[dict]) -> None:
     for v in volumes:
         colour = red if v["status"] == "critical" else yellow if v["status"] == "warn" else green
         pct = colour(f"{v['percent']:.0f}%")
-        print(f"  {bold(v['path']):<6} {v['label'][:18]:<18} {_bar(v['used'] / v['total'] if v['total'] else 0)} "
-              f"{pct}  {human_size(v['free'])} free of {human_size(v['total'])}")
+        print(
+            f"  {bold(v['path']):<6} {v['label'][:18]:<18} {_bar(v['used'] / v['total'] if v['total'] else 0)} "
+            f"{pct}  {human_size(v['free'])} free of {human_size(v['total'])}"
+        )
 
 
 def _clear_line(args: argparse.Namespace) -> None:
@@ -250,8 +274,8 @@ def _clear_line(args: argparse.Namespace) -> None:
 
 def _progress_printer():
     import shutil as _sh
+
     width = max(40, _sh.get_terminal_size((100, 20)).columns - 2)
-    state = {"last": ""}
 
     def show(payload: dict) -> None:
         phase = payload.get("phase")
@@ -263,18 +287,21 @@ def _progress_printer():
             sys.stderr.write("\r" + " " * width + "\r" + line + "\n")
             return
         elif phase == "scan":
-            line = f"scanning: {payload.get('files', 0):,} files, {human_size(payload.get('bytes', 0))}  {dim(str(payload.get('current', ''))[-50:])}"
+            where = dim(str(payload.get("current", ""))[-50:])
+            line = f"scanning: {payload.get('files', 0):,} files, {human_size(payload.get('bytes', 0))}  {where}"
         elif phase == "collect":
             line = f"collecting: {payload.get('files', 0):,} files, {payload.get('candidates', 0):,} same-size candidates"
         elif phase == "hash":
             line = f"hashing: {payload.get('done', 0)}/{payload.get('total', 0)}  {human_size(payload.get('bytes', 0))}"
         elif phase == "clean":
-            line = f"cleaning {payload.get('index', 0)}/{payload.get('total', 0)}: {payload.get('name', '')}  freed {human_size(payload.get('freed', 0))}"
+            freed = human_size(payload.get("freed", 0))
+            line = f"cleaning {payload.get('index', 0)}/{payload.get('total', 0)}: {payload.get('name', '')}  freed {freed}"
         else:
             sys.stderr.write("\r" + " " * width + "\r")
             return
         sys.stderr.write("\r" + line[:width].ljust(width))
         sys.stderr.flush()
+
     return show
 
 
@@ -282,6 +309,7 @@ def cmd_space(args: argparse.Namespace) -> int:
     from .space.cleaner import SpaceLog
     from .space.disks import list_volumes
     from .space.junk import analyze
+
     cfg = _load(args)
     volumes = list_volumes()
     if args.json:
@@ -294,12 +322,14 @@ def cmd_space(args: argparse.Namespace) -> int:
     a = analyze(cfg, progress=None if args.quiet else _progress_printer())
     _clear_line(args)
     print(bold(f"You could free about {human_size(a.total('safe') + a.total('review'))}") + dim(f"  (analysed in {a.duration:.0f}s)"))
-    print(f"  {green(human_size(a.total('safe')))} safe to delete now    {yellow(human_size(a.total('review')))} worth a look    "
-          f"{dim(human_size(a.total('manual')))} needs system tools")
+    print(
+        f"  {green(human_size(a.total('safe')))} safe to delete now    {yellow(human_size(a.total('review')))} worth a look    "
+        f"{dim(human_size(a.total('manual')))} needs system tools"
+    )
     for g in sorted(a.groups, key=lambda g: ({"safe": 0, "review": 1, "manual": 2}[g.confidence], -g.size)):
         tag = green("safe") if g.confidence == "safe" else yellow("review") if g.confidence == "review" else dim("manual")
         print(f"\n  [{tag}] {bold(g.title)}  {human_size(g.size)}  {dim(f'{g.count:,} items')}")
-        for it in sorted(g.items, key=lambda i: (-int(i.stale), -i.size))[:args.top]:
+        for it in sorted(g.items, key=lambda i: (-int(i.stale), -i.size))[: args.top]:
             name = it.to_dict()["name"]
             print(f"      {human_size(it.size):>9}  {name[:44]:<44} {dim(it.detail[:60])}")
         if len(g.items) > args.top:
@@ -314,6 +344,7 @@ def cmd_space(args: argparse.Namespace) -> int:
 def cmd_junk(args: argparse.Namespace) -> int:
     from .space.cleaner import SpaceLog, execute
     from .space.junk import analyze
+
     cfg = _load(args)
     a = analyze(cfg, progress=None if (args.json or args.quiet) else _progress_printer(), only=args.group or None)
     _clear_line(args)
@@ -340,8 +371,15 @@ def cmd_junk(args: argparse.Namespace) -> int:
         if answer not in ("y", "yes"):
             print(dim("Cancelled."))
             return 1
-    res = execute(a, [g.id for g in chosen], [], permanent_review=args.permanent, log=SpaceLog(), trigger="cli",
-                  progress=None if (args.json or args.quiet) else _progress_printer())
+    res = execute(
+        a,
+        [g.id for g in chosen],
+        [],
+        permanent_review=args.permanent,
+        log=SpaceLog(),
+        trigger="cli",
+        progress=None if (args.json or args.quiet) else _progress_printer(),
+    )
     _clear_line(args)
     if args.json:
         print(json.dumps(res.to_dict(), indent=2))
@@ -354,6 +392,7 @@ def cmd_junk(args: argparse.Namespace) -> int:
 
 def cmd_scan(args: argparse.Namespace) -> int:
     from .space.scanner import scan_tree
+
     target = Path(args.path or Path.home()).expanduser()
     if not target.is_dir():
         print(red(f"{target} is not a folder"))
@@ -367,14 +406,17 @@ def cmd_scan(args: argparse.Namespace) -> int:
     if res.denied:
         print(yellow(f"  {res.denied} folder(s) could not be read"))
     print(bold("\nLargest folders"))
-    kids = sorted(res.root.children, key=lambda c: -c.size)[:args.top]
+    kids = sorted(res.root.children, key=lambda c: -c.size)[: args.top]
     for c in kids:
         frac = c.size / res.bytes if res.bytes else 0
         print(f"  {_bar(frac, 18)} {human_size(c.size):>9}  {c.name}")
     if res.root.file_bytes:
-        print(f"  {_bar(res.root.file_bytes / res.bytes if res.bytes else 0, 18)} {human_size(res.root.file_bytes):>9}  {dim('(files directly here)')}")
+        print(
+            f"  {_bar(res.root.file_bytes / res.bytes if res.bytes else 0, 18)} {human_size(res.root.file_bytes):>9}  "
+            f"{dim('(files directly here)')}"
+        )
     print(bold("\nLargest files"))
-    for f in res.largest[:args.top]:
+    for f in res.largest[: args.top]:
         print(f"  {human_size(f['size']):>9}  {f['name'][:50]:<50} {dim(str(Path(f['path']).parent)[-40:])}")
     print(bold("\nBy type"))
     for t in res.by_type[:8]:
@@ -386,10 +428,15 @@ def cmd_scan(args: argparse.Namespace) -> int:
 def cmd_dupes(args: argparse.Namespace) -> int:
     from .space.cleaner import SpaceLog, remove_paths
     from .space.duplicates import find_duplicates
+
     cfg = _load(args)
     roots = args.paths or cfg.space.duplicate_roots or [str(p) for p in cfg.source_paths()] + [str(Path.home() / "Downloads")]
-    res = find_duplicates(roots, min_bytes=int(args.min_mb * 1024 * 1024), exclude_names=set(cfg.space.exclude),
-                          progress=None if (args.json or args.quiet) else _progress_printer())
+    res = find_duplicates(
+        roots,
+        min_bytes=int(args.min_mb * 1024 * 1024),
+        exclude_names=set(cfg.space.exclude),
+        progress=None if (args.json or args.quiet) else _progress_printer(),
+    )
     _clear_line(args)
     if args.json and not args.remove:
         print(json.dumps(res.to_dict(), indent=2))
@@ -398,8 +445,11 @@ def cmd_dupes(args: argparse.Namespace) -> int:
     if not groups:
         print(dim("No duplicates found."))
         return 0
-    print(bold(f"{len(groups)} duplicate group(s), {human_size(res.reclaimable)} reclaimable") + dim(f"  ({res.scanned_files:,} files checked in {res.duration:.1f}s)"))
-    for g in groups[:args.top]:
+    print(
+        bold(f"{len(groups)} duplicate group(s), {human_size(res.reclaimable)} reclaimable")
+        + dim(f"  ({res.scanned_files:,} files checked in {res.duration:.1f}s)")
+    )
+    for g in groups[: args.top]:
         keep = g.suggested_keep()
         print(f"\n  {human_size(g.size):>9} × {len(g.files)}  {bold(Path(keep).name)}")
         for f in sorted(g.files, key=lambda f: (f.mtime, f.path)):
@@ -412,7 +462,9 @@ def cmd_dupes(args: argparse.Namespace) -> int:
         return 0
     victims = [f.path for g in groups for f in g.files if f.path != g.suggested_keep()]
     if not args.yes:
-        answer = input(bold(f"\nMove {len(victims)} duplicate(s), {human_size(res.reclaimable)}, to the recycle bin? [y/N] ")).strip().lower()
+        answer = (
+            input(bold(f"\nMove {len(victims)} duplicate(s), {human_size(res.reclaimable)}, to the recycle bin? [y/N] ")).strip().lower()
+        )
         if answer not in ("y", "yes"):
             print(dim("Cancelled."))
             return 1
@@ -425,6 +477,7 @@ def cmd_dupes(args: argparse.Namespace) -> int:
 
 
 # ----------------------------------------------------------------------------- parser
+
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
@@ -471,7 +524,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     sp = sub.add_parser("junk", help="list or remove junk (safe groups by default)")
     sp.add_argument("--clean", action="store_true", help="actually remove it")
-    sp.add_argument("--review", action="store_true", help="also include 'review' groups (old installers, idle node_modules, recycle bin ...)")
+    sp.add_argument(
+        "--review", action="store_true", help="also include 'review' groups (old installers, idle node_modules, recycle bin ...)"
+    )
     sp.add_argument("--group", action="append", help="only this group id (repeatable), e.g. --group temp --group browser")
     sp.add_argument("--permanent", action="store_true", help="delete review items permanently instead of using the recycle bin")
     sp.add_argument("-y", "--yes", action="store_true", help="do not ask for confirmation")
@@ -515,6 +570,7 @@ def main(argv: list[str] | None = None) -> int:
         # Default: GUI when available, else preview.
         try:
             import webview  # noqa: F401
+
             args.command = "gui"
             return cmd_gui(args)
         except ImportError:
