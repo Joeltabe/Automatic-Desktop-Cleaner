@@ -3,6 +3,7 @@
 No third-party dependency: Windows uses the shell API through ctypes, macOS asks Finder,
 Linux follows the freedesktop trash specification.
 """
+
 from __future__ import annotations
 
 import ctypes
@@ -32,6 +33,7 @@ class RemoveResult:
 # --------------------------------------------------------------------------- recycle bin: Windows
 
 if IS_WIN:
+
     class _SHFILEOPSTRUCTW(ctypes.Structure):
         _fields_ = [
             ("hwnd", ctypes.c_void_p),
@@ -81,6 +83,7 @@ if IS_WIN:
         return rc in (0, -2147418113)  # S_OK, or E_UNEXPECTED when it was already empty
 
 else:
+
     def _trash_dirs() -> tuple[Path, Path]:
         if IS_MAC:
             t = home() / ".Trash"
@@ -93,6 +96,7 @@ else:
         if not files_dir.is_dir():
             return 0, 0
         from .common import dir_size
+
         size, _ = dir_size(files_dir)
         try:
             count = sum(1 for _ in files_dir.iterdir())
@@ -127,17 +131,18 @@ else:
         while target.exists() or (info_dir / f"{target.name}.trashinfo").exists():
             target = files_dir / f"{src.stem} ({n}){src.suffix}"
             n += 1
-        info = (f"[Trash Info]\nPath={urllib.parse.quote(str(src.resolve()))}\n"
-                f"DeletionDate={time.strftime('%Y-%m-%dT%H:%M:%S')}\n")
+        info = f"[Trash Info]\nPath={urllib.parse.quote(str(src.resolve()))}\nDeletionDate={time.strftime('%Y-%m-%dT%H:%M:%S')}\n"
         (info_dir / f"{target.name}.trashinfo").write_text(info, encoding="utf-8")
         shutil.move(str(src), str(target))
 
 
 # --------------------------------------------------------------------------- public API
 
+
 def send_to_trash(paths: list[str] | str) -> RemoveResult:
     """Move files/folders to the recycle bin. Sizes are measured first so ``freed`` is meaningful."""
     from .common import path_size
+
     items = [paths] if isinstance(paths, str) else list(paths)
     res = RemoveResult()
     sizes = {p: path_size(p)[0] for p in items}
@@ -204,6 +209,7 @@ def delete_permanently(paths: list[str] | str) -> RemoveResult:
     ``freed`` is computed as size-before minus size-after so partially removed folders count correctly.
     """
     from .common import path_size
+
     items = [paths] if isinstance(paths, str) else list(paths)
     res = RemoveResult()
     for p in items:
