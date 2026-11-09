@@ -153,8 +153,9 @@ def test_unmatched_catch_all_and_missing_source(tmp_path):
     src = tmp_path / "D"
     src.mkdir()
     touch(src / "weird.xyz")
-    cfg = Config(sources=[str(src), str(tmp_path / "nope")], rules=[],
-                 options=Options(skip_recent_seconds=0, unmatched_destination="Other"))
+    cfg = Config(
+        sources=[str(src), str(tmp_path / "nope")], rules=[], options=Options(skip_recent_seconds=0, unmatched_destination="Other")
+    )
     plan = build_plan(cfg)
     assert plan.missing_sources == [str(tmp_path / "nope")]
     assert len(plan.actions) == 1 and plan.actions[0].rule_name == "Other"
