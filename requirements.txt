@@ -1,0 +1,3 @@
+# The core (CLI, watch mode, undo) is pure standard library.
+# The desktop GUI needs pywebview (uses Edge WebView2 on Windows, WebKit on macOS/Linux).
+pywebview>=5
