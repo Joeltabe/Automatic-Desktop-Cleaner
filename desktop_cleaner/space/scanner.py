@@ -1,4 +1,5 @@
 """Folder scanner for the storage map: a size tree, the largest files and a breakdown by type."""
+
 from __future__ import annotations
 
 import heapq
@@ -8,7 +9,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from .common import Cancel, Throttle, ProgressFn, category_of, is_reparse_or_link, iter_entries
+from .common import Cancel, ProgressFn, Throttle, category_of, is_reparse_or_link, iter_entries
 
 
 @dataclass
@@ -18,27 +19,33 @@ class DirNode:
     size: int = 0
     files: int = 0
     dirs: int = 0
-    file_bytes: int = 0            # bytes of files directly inside (not in sub-folders)
-    children: list["DirNode"] = field(default_factory=list)
+    file_bytes: int = 0  # bytes of files directly inside (not in sub-folders)
+    children: list[DirNode] = field(default_factory=list)
     denied: bool = False
     newest_mtime: float = 0.0
 
     def to_dict(self, depth: int = 2, top: int = 40, min_fraction: float = 0.002, root_size: int | None = None) -> dict[str, Any]:
         root_size = root_size or max(1, self.size)
         d: dict[str, Any] = {
-            "name": self.name, "path": self.path, "size": self.size, "files": self.files, "dirs": self.dirs,
-            "file_bytes": self.file_bytes, "denied": self.denied, "newest_mtime": self.newest_mtime,
+            "name": self.name,
+            "path": self.path,
+            "size": self.size,
+            "files": self.files,
+            "dirs": self.dirs,
+            "file_bytes": self.file_bytes,
+            "denied": self.denied,
+            "newest_mtime": self.newest_mtime,
         }
         if depth > 0:
             kids = sorted(self.children, key=lambda c: -c.size)
             shown = [c for c in kids[:top] if c.size >= root_size * min_fraction or c is kids[0]]
-            rest = kids[len(shown):]
+            rest = kids[len(shown) :]
             d["children"] = [c.to_dict(depth - 1, top, min_fraction, root_size) for c in shown]
             if rest:
                 d["other"] = {"count": len(rest), "size": sum(c.size for c in rest)}
         return d
 
-    def find(self, path: str) -> "DirNode | None":
+    def find(self, path: str) -> DirNode | None:
         norm = os.path.normcase(os.path.normpath(path))
         if os.path.normcase(os.path.normpath(self.path)) == norm:
             return self
@@ -64,17 +71,30 @@ class ScanResult:
 
     def to_dict(self, depth: int = 2) -> dict[str, Any]:
         return {
-            "root": self.root.to_dict(depth=depth), "largest": self.largest, "by_type": self.by_type, "by_age": self.by_age,
-            "files": self.files, "dirs": self.dirs, "bytes": self.bytes, "duration": round(self.duration, 2),
-            "denied": self.denied, "truncated": self.truncated,
+            "root": self.root.to_dict(depth=depth),
+            "largest": self.largest,
+            "by_type": self.by_type,
+            "by_age": self.by_age,
+            "files": self.files,
+            "dirs": self.dirs,
+            "bytes": self.bytes,
+            "duration": round(self.duration, 2),
+            "denied": self.denied,
+            "truncated": self.truncated,
         }
 
 
-_AGE_BUCKETS = (("This week", 7), ("This month", 30), ("Last 6 months", 182), ("Last year", 365), ("Older", 10 ** 6))
+_AGE_BUCKETS = (("This week", 7), ("This month", 30), ("Last 6 months", 182), ("Last year", 365), ("Older", 10**6))
 
 
-def scan_tree(root: Path | str, cancel: Cancel | None = None, progress: ProgressFn | None = None,
-              top_files: int = 150, exclude_names: set[str] | None = None, max_entries: int = 6_000_000) -> ScanResult:
+def scan_tree(
+    root: Path | str,
+    cancel: Cancel | None = None,
+    progress: ProgressFn | None = None,
+    top_files: int = 150,
+    exclude_names: set[str] | None = None,
+    max_entries: int = 6_000_000,
+) -> ScanResult:
     """Walk ``root`` once and build everything the storage map needs.
 
     Symlinks and junctions are never followed. Permission errors mark the node ``denied`` and move on.
@@ -134,7 +154,15 @@ def scan_tree(root: Path | str, cancel: Cancel | None = None, progress: Progress
                     continue
                 stack.append((child, _closing_iter(child_it)))
                 if seen % 64 == 0:
-                    emit({"phase": "scan", "files": total_files, "dirs": total_dirs, "bytes": root_node.size + _partial(stack), "current": entry.path})
+                    emit(
+                        {
+                            "phase": "scan",
+                            "files": total_files,
+                            "dirs": total_dirs,
+                            "bytes": root_node.size + _partial(stack),
+                            "current": entry.path,
+                        }
+                    )
             elif entry.is_file(follow_symlinks=False):
                 st = entry.stat(follow_symlinks=False)
                 size = st.st_size
@@ -168,13 +196,25 @@ def scan_tree(root: Path | str, cancel: Cancel | None = None, progress: Progress
             parent.files += node.files
             parent.dirs += node.dirs + 1
 
-    largest = [{"path": p, "name": os.path.basename(p), "size": s, "mtime": m, "category": category_of(p)}
-               for s, p, m in sorted(heap, reverse=True)]
+    largest = [
+        {"path": p, "name": os.path.basename(p), "size": s, "mtime": m, "category": category_of(p)}
+        for s, p, m in sorted(heap, reverse=True)
+    ]
     types = sorted(({"category": k, "bytes": v[0], "files": v[1]} for k, v in by_type.items()), key=lambda d: -d["bytes"])
     ages = [{"label": k, "bytes": v[0], "files": v[1]} for k, v in by_age.items()]
     emit({"phase": "done", "files": total_files, "dirs": total_dirs, "bytes": root_node.size}, force=True)
-    return ScanResult(root=root_node, largest=largest, by_type=types, by_age=ages, files=total_files, dirs=total_dirs,
-                      bytes=root_node.size, duration=time.monotonic() - started, denied=denied, truncated=truncated)
+    return ScanResult(
+        root=root_node,
+        largest=largest,
+        by_type=types,
+        by_age=ages,
+        files=total_files,
+        dirs=total_dirs,
+        bytes=root_node.size,
+        duration=time.monotonic() - started,
+        denied=denied,
+        truncated=truncated,
+    )
 
 
 def _closing_iter(scandir_it: Any) -> Any:
