@@ -1,0 +1,44 @@
+name: Bug report
+description: Something moved, deleted or displayed wrongly
+labels: ["bug"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `desktop-cleaner --version`
+      placeholder: desktop-cleaner 2.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: [Windows 11, Windows 10, macOS, Linux]
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Organise (rules, preview, undo)
+        - Space (junk analysis, clean)
+        - Storage map
+        - Duplicates
+        - CLI
+        - GUI / window
+        - Other
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: app.log excerpt
+      description: Next to your config file (`desktop-cleaner config path` tells you where). Remove anything private.
+      render: text

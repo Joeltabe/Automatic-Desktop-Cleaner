@@ -1,0 +1,31 @@
+name: Junk detector request
+description: A cache, leftover or build folder Desktop Cleaner should know about
+labels: ["detector", "enhancement"]
+body:
+  - type: input
+    id: app
+    attributes:
+      label: Application or tool
+      placeholder: e.g. Unity Editor, Blender, Docker Desktop
+    validations:
+      required: true
+  - type: textarea
+    id: paths
+    attributes:
+      label: Paths
+      description: Where the data lives on each OS you know about.
+    validations:
+      required: true
+  - type: dropdown
+    id: grade
+    attributes:
+      label: Suggested grade
+      description: safe = regenerates on its own, review = recreatable with a command or probably unwanted, manual = needs the tool itself
+      options: [safe, review, manual]
+    validations:
+      required: true
+  - type: input
+    id: restore
+    attributes:
+      label: How to restore it
+      placeholder: e.g. reopen the app / npm install
