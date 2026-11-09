@@ -1,4 +1,5 @@
 """Small shared helpers for the space modules: cancellation, sizing, platform paths."""
+
 from __future__ import annotations
 
 import os
@@ -6,8 +7,8 @@ import stat
 import sys
 import threading
 import time
+from collections.abc import Callable, Iterator
 from pathlib import Path
-from typing import Callable, Iterator
 
 IS_WIN = sys.platform == "win32"
 IS_MAC = sys.platform == "darwin"
@@ -172,13 +173,78 @@ EXT_CATEGORIES: dict[str, tuple[str, ...]] = {
     "Images": ("jpg", "jpeg", "png", "gif", "webp", "bmp", "heic", "svg", "tiff", "tif", "ico", "raw", "cr2", "nef", "psd", "ai"),
     "Video": ("mp4", "mkv", "mov", "avi", "webm", "wmv", "m4v", "flv", "mpg", "mpeg", "ts", "3gp"),
     "Audio": ("mp3", "wav", "flac", "aac", "ogg", "m4a", "wma", "aiff", "opus"),
-    "Documents": ("pdf", "doc", "docx", "odt", "rtf", "txt", "md", "pages", "xls", "xlsx", "csv", "ods", "ppt", "pptx", "key", "odp", "epub"),
+    "Documents": (
+        "pdf",
+        "doc",
+        "docx",
+        "odt",
+        "rtf",
+        "txt",
+        "md",
+        "pages",
+        "xls",
+        "xlsx",
+        "csv",
+        "ods",
+        "ppt",
+        "pptx",
+        "key",
+        "odp",
+        "epub",
+    ),
     "Archives": ("zip", "rar", "7z", "tar", "gz", "bz2", "xz", "zst", "tgz", "cab"),
     "Installers": ("exe", "msi", "msix", "appx", "dmg", "pkg", "deb", "rpm", "appimage", "apk"),
     "Disk images": ("iso", "img", "vhd", "vhdx", "vmdk", "qcow2", "ova", "wim", "esd"),
-    "Code": ("py", "js", "ts", "tsx", "jsx", "html", "css", "scss", "json", "java", "kt", "c", "h", "cpp", "cs", "go", "rs",
-             "sh", "ps1", "sql", "ipynb", "dart", "swift", "rb", "php", "yaml", "yml", "toml", "xml", "lock"),
-    "Data & databases": ("db", "sqlite", "sqlite3", "parquet", "arrow", "feather", "h5", "hdf5", "npy", "npz", "pkl", "pickle", "bin", "dat", "log", "bak"),
+    "Code": (
+        "py",
+        "js",
+        "ts",
+        "tsx",
+        "jsx",
+        "html",
+        "css",
+        "scss",
+        "json",
+        "java",
+        "kt",
+        "c",
+        "h",
+        "cpp",
+        "cs",
+        "go",
+        "rs",
+        "sh",
+        "ps1",
+        "sql",
+        "ipynb",
+        "dart",
+        "swift",
+        "rb",
+        "php",
+        "yaml",
+        "yml",
+        "toml",
+        "xml",
+        "lock",
+    ),
+    "Data & databases": (
+        "db",
+        "sqlite",
+        "sqlite3",
+        "parquet",
+        "arrow",
+        "feather",
+        "h5",
+        "hdf5",
+        "npy",
+        "npz",
+        "pkl",
+        "pickle",
+        "bin",
+        "dat",
+        "log",
+        "bak",
+    ),
     "3D & design": ("glb", "gltf", "obj", "fbx", "blend", "stl", "fig", "sketch", "drawio", "3ds", "dae", "usdz"),
     "Models & ML": ("safetensors", "ckpt", "pt", "pth", "onnx", "gguf", "tflite", "pb"),
     "Fonts": ("ttf", "otf", "woff", "woff2"),
