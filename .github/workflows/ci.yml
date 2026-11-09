@@ -37,6 +37,8 @@ jobs:
   lint:
     name: ruff
     runs-on: ubuntu-latest
+    # Advisory until the ruff adoption pull request lands (it removes this line and makes lint blocking).
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
