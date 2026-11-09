@@ -1,46 +1,37 @@
-import os
-import shutil
-import json
-from datetime import datetime
+#!/usr/bin/env python3
+"""Backward-compatible launcher.
 
-def load_config():
-    with open("config.json", "r") as config_file:
-        config = json.load(config_file)
-    return config.get("rules", [])
+Running ``python desktop-cleaner.py`` used to organise ~/Desktop using the
+``config.json`` next to this file. It now hands off to the full CLI; a legacy
+config.json in this folder is imported automatically on first run.
 
-def organize_files(rules):
-    desktop_path = os.path.expanduser("~/Desktop")
-    log_file_path = "desktop_cleaner.log"
-    
-    # Create log file or append to existing log
-    with open(log_file_path, "a") as log_file:
-        log_file.write("\n\n" + "=" * 30 + "\n")
-        log_file.write(f"Cleaning started at {datetime.now()}\n")
+    python desktop-cleaner.py            # opens the GUI (or previews if pywebview is missing)
+    python desktop-cleaner.py run        # organise now
+    python desktop-cleaner.py --help     # everything else
+"""
+from __future__ import annotations
 
-        for rule in rules:
-            file_type = rule.get("file_type", "")
-            destination_folder = rule.get("destination_folder", "Miscellaneous")
-            
-            # Create the destination folder if it doesn't exist
-            destination_path = os.path.join(desktop_path, destination_folder)
-            os.makedirs(destination_path, exist_ok=True)
+import sys
+from pathlib import Path
 
-            # Move files based on the rule
-            for filename in os.listdir(desktop_path):
-                if filename.endswith(f".{file_type}"):
-                    src_path = os.path.join(desktop_path, filename)
-                    dest_path = os.path.join(destination_path, filename)
-                    
-                    shutil.move(src_path, dest_path)
-                    
-                    # Log the moved file
-                    log_file.write(f"Moved: {filename} to {destination_folder}\n")
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
 
-        log_file.write(f"Cleaning completed at {datetime.now()}\n")
+from desktop_cleaner.cli import main  # noqa: E402
+from desktop_cleaner.config import default_config_path, load_config, save_config  # noqa: E402
 
-def main():
-    rules = load_config()
-    organize_files(rules)
+
+def _import_legacy_config() -> None:
+    legacy = HERE / "config.json"
+    target = default_config_path()
+    if legacy.exists() and not target.exists():
+        try:
+            save_config(load_config(legacy), target)
+            print(f"Imported legacy config.json into {target}")
+        except Exception as exc:  # never block the user on a bad old file
+            print(f"Could not import legacy config.json: {exc}")
+
 
 if __name__ == "__main__":
-    main()
+    _import_legacy_config()
+    raise SystemExit(main())
