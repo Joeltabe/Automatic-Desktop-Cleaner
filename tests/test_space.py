@@ -115,6 +115,7 @@ def test_temp_detector_and_execute(tmp_path: Path, monkeypatch: pytest.MonkeyPat
     monkeypatch.setenv("TEMP", str(temp))
     monkeypatch.setenv("TMP", str(temp))
     monkeypatch.setenv("TMPDIR", str(temp))
+    monkeypatch.setenv("SystemRoot", str(tmp_path / "sysroot"))  # CI runners can write to C:\Windows\Temp
     monkeypatch.setattr(junk, "local_appdata", lambda: tmp_path / "nope")
     cfg = Config(sources=[str(tmp_path / "Desktop")])
     (tmp_path / "Desktop").mkdir()
@@ -122,10 +123,13 @@ def test_temp_detector_and_execute(tmp_path: Path, monkeypatch: pytest.MonkeyPat
     a = analyze(cfg, progress=progress.append, only=["temp"])
     g = a.group("temp")
     assert g is not None and g.confidence == "safe"
-    assert [Path(i.path).name for i in g.items] == ["old-installer-cache"]
-    assert g.size == 4096 and any(p.get("phase") == "group" for p in progress)
+    # /tmp on POSIX runners may hold other old files, so check ours rather than the whole list
+    names = [Path(i.path).name for i in g.items]
+    assert "old-installer-cache" in names and "fresh.tmp" not in names
+    ours = next(i for i in g.items if Path(i.path).name == "old-installer-cache")
+    assert ours.size == 4096 and any(p.get("phase") == "group" for p in progress)
     log = SpaceLog(tmp_path / "space.jsonl")
-    res = execute(a, ["temp"], [], log=log, trigger="test")
+    res = execute(a, [], [ours.path], log=log, trigger="test")  # only our item, never the machine's real temp files
     assert res.freed == 4096 and res.removed == 1 and not res.failed
     assert not old.exists() and fresh.exists()  # anything younger than a day is left alone
     summary = log.summary()
