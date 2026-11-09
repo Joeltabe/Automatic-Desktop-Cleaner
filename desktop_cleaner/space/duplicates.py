@@ -1,4 +1,5 @@
 """Duplicate file finder: size buckets, then a quick partial hash, then a full hash. Only true byte-for-byte copies."""
+
 from __future__ import annotations
 
 import hashlib
@@ -22,8 +23,13 @@ class DupFile:
     mtime: float
 
     def to_dict(self) -> dict[str, Any]:
-        return {"path": self.path, "name": os.path.basename(self.path), "size": self.size, "mtime": self.mtime,
-                "folder": os.path.dirname(self.path)}
+        return {
+            "path": self.path,
+            "name": os.path.basename(self.path),
+            "size": self.size,
+            "mtime": self.mtime,
+            "folder": os.path.dirname(self.path),
+        }
 
 
 @dataclass
@@ -41,9 +47,15 @@ class DupGroup:
         return min(self.files, key=lambda f: (f.mtime, len(f.path))).path
 
     def to_dict(self) -> dict[str, Any]:
-        return {"digest": self.digest, "size": self.size, "copies": len(self.files), "reclaimable": self.reclaimable,
-                "keep": self.suggested_keep(), "category": category_of(self.files[0].path),
-                "files": [f.to_dict() for f in sorted(self.files, key=lambda f: (f.mtime, f.path))]}
+        return {
+            "digest": self.digest,
+            "size": self.size,
+            "copies": len(self.files),
+            "reclaimable": self.reclaimable,
+            "keep": self.suggested_keep(),
+            "category": category_of(self.files[0].path),
+            "files": [f.to_dict() for f in sorted(self.files, key=lambda f: (f.mtime, f.path))],
+        }
 
 
 @dataclass
@@ -61,10 +73,17 @@ class DupResult:
 
     def to_dict(self, max_groups: int = 500) -> dict[str, Any]:
         groups = sorted(self.groups, key=lambda g: -g.reclaimable)
-        return {"groups": [g.to_dict() for g in groups[:max_groups]], "total_groups": len(groups),
-                "reclaimable": self.reclaimable, "duplicates": sum(len(g.files) - 1 for g in groups),
-                "scanned_files": self.scanned_files, "scanned_bytes": self.scanned_bytes, "hashed_bytes": self.hashed_bytes,
-                "duration": round(self.duration, 2), "roots": self.roots}
+        return {
+            "groups": [g.to_dict() for g in groups[:max_groups]],
+            "total_groups": len(groups),
+            "reclaimable": self.reclaimable,
+            "duplicates": sum(len(g.files) - 1 for g in groups),
+            "scanned_files": self.scanned_files,
+            "scanned_bytes": self.scanned_bytes,
+            "hashed_bytes": self.hashed_bytes,
+            "duration": round(self.duration, 2),
+            "roots": self.roots,
+        }
 
 
 def _hash(path: str, partial: bool, cancel: Cancel | None, counter: list[int]) -> str | None:
@@ -88,8 +107,13 @@ def _hash(path: str, partial: bool, cancel: Cancel | None, counter: list[int]) -
     return h.hexdigest()
 
 
-def find_duplicates(roots: list[Path | str], min_bytes: int = 1024 * 1024, exclude_names: set[str] | None = None,
-                    cancel: Cancel | None = None, progress: ProgressFn | None = None) -> DupResult:
+def find_duplicates(
+    roots: list[Path | str],
+    min_bytes: int = 1024 * 1024,
+    exclude_names: set[str] | None = None,
+    cancel: Cancel | None = None,
+    progress: ProgressFn | None = None,
+) -> DupResult:
     t0 = time.monotonic()
     emit = Throttle(progress, 0.12)
     excl = {n.lower() for n in (exclude_names or set())}
@@ -141,7 +165,16 @@ def find_duplicates(roots: list[Path | str], min_bytes: int = 1024 * 1024, exclu
             if d:
                 partial[d].append(f)
             done_files += 1
-            emit({"phase": "hash", "done": done_files, "total": total_files, "bytes": counter[0], "total_bytes": to_hash_bytes, "current": f.path})
+            emit(
+                {
+                    "phase": "hash",
+                    "done": done_files,
+                    "total": total_files,
+                    "bytes": counter[0],
+                    "total_bytes": to_hash_bytes,
+                    "current": f.path,
+                }
+            )
         for sub in partial.values():
             if len(sub) < 2:
                 continue
@@ -153,10 +186,25 @@ def find_duplicates(roots: list[Path | str], min_bytes: int = 1024 * 1024, exclu
                 d = _hash(f.path, False, cancel, counter)
                 if d:
                     full[d].append(f)
-                emit({"phase": "hash", "done": done_files, "total": total_files, "bytes": counter[0], "total_bytes": to_hash_bytes, "current": f.path})
+                emit(
+                    {
+                        "phase": "hash",
+                        "done": done_files,
+                        "total": total_files,
+                        "bytes": counter[0],
+                        "total_bytes": to_hash_bytes,
+                        "current": f.path,
+                    }
+                )
             for digest, same in full.items():
                 if len(same) > 1:
                     groups.append(DupGroup(digest=digest, size=same[0].size, files=same))
     emit({"phase": "done", "groups": len(groups)}, force=True)
-    return DupResult(groups=groups, scanned_files=scanned, scanned_bytes=scanned_bytes, hashed_bytes=counter[0],
-                     duration=time.monotonic() - t0, roots=root_paths)
+    return DupResult(
+        groups=groups,
+        scanned_files=scanned,
+        scanned_bytes=scanned_bytes,
+        hashed_bytes=counter[0],
+        duration=time.monotonic() - t0,
+        roots=root_paths,
+    )
