@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "desktop-cleaner"
+version = "2.1.0"
+description = "Tidy your Desktop and Downloads with rules, preview and undo, and free up disk space safely: junk analysis, storage map, duplicates."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [{ name = "Joel Tabe" }]
+keywords = ["desktop", "cleaner", "organizer", "files", "automation", "disk-space", "junk", "duplicates", "storage", "treemap"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Topic :: Desktop Environment :: File Managers",
+  "Topic :: Utilities",
+]
+dependencies = []
+
+[project.optional-dependencies]
+gui = ["pywebview>=5"]
+dev = ["pytest>=8", "pywebview>=5"]
+
+[project.scripts]
+desktop-cleaner = "desktop_cleaner.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/Joeltabe/Automatic-Desktop-Cleaner"
+Issues = "https://github.com/Joeltabe/Automatic-Desktop-Cleaner/issues"
+
+[tool.setuptools.packages.find]
+include = ["desktop_cleaner*"]
+
+[tool.setuptools.package-data]
+"desktop_cleaner.gui" = ["web/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
