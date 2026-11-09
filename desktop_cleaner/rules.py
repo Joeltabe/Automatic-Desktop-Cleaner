@@ -1,4 +1,5 @@
 """File inspection and rule matching."""
+
 from __future__ import annotations
 
 import fnmatch
@@ -16,18 +17,17 @@ from .config import Rule
 class FileInfo:
     path: Path
     name: str
-    ext: str          # lower-case, without the dot; "" when none
+    ext: str  # lower-case, without the dot; "" when none
     size: int
     mtime: float
     is_dir: bool
 
     @staticmethod
-    def from_path(path: Path) -> "FileInfo":
+    def from_path(path: Path) -> FileInfo:
         st = path.stat()
         is_dir = path.is_dir()
         ext = "" if is_dir else path.suffix.lower().lstrip(".")
-        return FileInfo(path=path, name=path.name, ext=ext, size=0 if is_dir else st.st_size,
-                        mtime=st.st_mtime, is_dir=is_dir)
+        return FileInfo(path=path, name=path.name, ext=ext, size=0 if is_dir else st.st_size, mtime=st.st_mtime, is_dir=is_dir)
 
     @property
     def age_seconds(self) -> float:
@@ -40,10 +40,7 @@ class FileInfo:
 
 def is_ignored(name: str, ignore_patterns: list[str]) -> bool:
     lowered = name.lower()
-    for pattern in ignore_patterns:
-        if fnmatch.fnmatchcase(lowered, pattern.lower()):
-            return True
-    return False
+    return any(fnmatch.fnmatchcase(lowered, pattern.lower()) for pattern in ignore_patterns)
 
 
 _REGEX_CACHE: dict[str, re.Pattern[str] | None] = {}
@@ -84,9 +81,7 @@ def rule_matches(rule: Rule, info: FileInfo) -> bool:
     size_mb = info.size / (1024 * 1024)
     if m.min_size_mb is not None and size_mb < m.min_size_mb:
         return False
-    if m.max_size_mb is not None and size_mb > m.max_size_mb:
-        return False
-    return True
+    return not (m.max_size_mb is not None and size_mb > m.max_size_mb)
 
 
 def first_matching_rule(rules: list[Rule], info: FileInfo) -> Rule | None:
