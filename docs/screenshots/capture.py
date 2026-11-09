@@ -5,14 +5,14 @@
 
 Needs `pip install playwright` and an installed Edge or Chrome (no browser download).
 """
+
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
-
-import os
 
 PORT = os.environ.get("DC_PREVIEW_PORT", "8765")
 BASE = f"http://127.0.0.1:{PORT}/index.html?clean=1"
