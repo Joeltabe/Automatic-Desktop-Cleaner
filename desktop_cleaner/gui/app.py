@@ -5,6 +5,7 @@ the ``js_api`` object to JavaScript. Anything that is not meant to be called fro
 the page (the window handle, the config, the journal) therefore lives on
 underscore-prefixed attributes, otherwise pywebview walks into them.
 """
+
 from __future__ import annotations
 
 import functools
@@ -16,16 +17,27 @@ import sys
 import threading
 import traceback
 import webbrowser
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from .. import __version__
-from ..config import (CONFLICT_STRATEGIES, DATE_SUBFOLDER_MODES, config_dir, config_from_dict, config_to_dict,
-                      default_config, default_config_path, ensure_config, save_config)
+from ..config import (
+    CONFLICT_STRATEGIES,
+    DATE_SUBFOLDER_MODES,
+    config_dir,
+    config_from_dict,
+    config_to_dict,
+    default_config,
+    default_config_path,
+    ensure_config,
+    save_config,
+)
 from ..engine import Plan, apply_plan, build_plan
 from ..journal import Journal
 from ..rules import human_size
-from ..space.cleaner import SpaceLog, execute as execute_clean, remove_paths
+from ..space.cleaner import SpaceLog, remove_paths
+from ..space.cleaner import execute as execute_clean
 from ..space.common import Cancel, Cancelled
 from ..space.disks import list_volumes
 from ..space.duplicates import find_duplicates
@@ -54,7 +66,7 @@ def _guard(fn: Callable[..., dict[str, Any]]) -> Callable[..., dict[str, Any]]:
     """Never let an exception escape into the JS bridge; log it and return an error payload."""
 
     @functools.wraps(fn)
-    def wrapper(self: "Api", *args: Any, **kwargs: Any) -> dict[str, Any]:
+    def wrapper(self: Api, *args: Any, **kwargs: Any) -> dict[str, Any]:
         try:
             return fn(self, *args, **kwargs)
         except Exception as exc:  # noqa: BLE001 - we want everything
@@ -103,6 +115,7 @@ class Api:
 
     def _dialog(self, kind: str, **kw: Any) -> Any:
         import webview
+
         fd = getattr(webview, "FileDialog", None)  # pywebview >= 5.4 enum; the module constants are deprecated
         if fd is not None:
             dialog_type = {"open": fd.OPEN, "folder": fd.FOLDER, "save": fd.SAVE}[kind]
@@ -163,7 +176,7 @@ class Api:
             return self._err("cancelled")
         path = paths[0] if isinstance(paths, (list, tuple)) else paths
         try:
-            with open(path, "r", encoding="utf-8") as fh:
+            with open(path, encoding="utf-8") as fh:
                 cfg = config_from_dict(json.load(fh))
         except Exception as exc:  # noqa: BLE001
             return self._err(f"Could not import: {exc}")
@@ -246,8 +259,7 @@ class Api:
                             counts[ext] = counts.get(ext, 0) + 1
                 except OSError:
                     pass
-                entry["top_ext"] = sorted(({"ext": k, "count": v} for k, v in counts.items()),
-                                          key=lambda d: -d["count"])[:8]
+                entry["top_ext"] = sorted(({"ext": k, "count": v} for k, v in counts.items()), key=lambda d: -d["count"])[:8]
             out.append(entry)
         return self._ok(sources=out)
 
@@ -278,12 +290,11 @@ class Api:
         except (LookupError, ValueError) as exc:
             return self._err(str(exc))
         log.info("undo %s: restored %d, failed %d", res.batch_id, len(res.restored), len(res.failed))
-        return self._ok(batch_id=res.batch_id, restored=len(res.restored),
-                        failed=[{"file": m.dest, "error": e} for m, e in res.failed])
+        return self._ok(batch_id=res.batch_id, restored=len(res.restored), failed=[{"file": m.dest, "error": e} for m, e in res.failed])
 
     @_guard
     def history(self, limit: int = 50) -> dict[str, Any]:
-        batches = self._journal.batches()[-int(limit):]
+        batches = self._journal.batches()[-int(limit) :]
         return self._ok(batches=[b.to_dict() for b in reversed(batches)])
 
     @_guard
@@ -302,8 +313,10 @@ class Api:
             return self._ok(watching=True)
 
         def on_batch(plan: Plan, result: Any) -> None:
-            self._emit("watch_batch", {"moved": len(result.moved), "bytes": result.bytes_moved,
-                                       "names": [Path(m.src).name for m in result.moved][:5]})
+            self._emit(
+                "watch_batch",
+                {"moved": len(result.moved), "bytes": result.bytes_moved, "names": [Path(m.src).name for m in result.moved][:5]},
+            )
 
         def on_tick(plan: Plan) -> None:
             self._emit("watch_tick", {"pending": len(plan.actions)})
@@ -323,8 +336,7 @@ class Api:
     @_guard
     def watch_status(self) -> dict[str, Any]:
         w = self._watcher
-        return self._ok(watching=bool(w and w.running), batches=w.batches_applied if w else 0,
-                        files=w.files_moved if w else 0)
+        return self._ok(watching=bool(w and w.running), batches=w.batches_applied if w else 0, files=w.files_moved if w else 0)
 
     # ------------------------------------------------------------------ free up space
     def _begin(self, what: str) -> str | None:
@@ -351,9 +363,13 @@ class Api:
 
     @_guard
     def space_overview(self) -> dict[str, Any]:
-        return self._ok(volumes=list_volumes(), history=self._space_log.summary(30),
-                        analysis=self._analysis.to_dict() if self._analysis else None, busy=self._busy,
-                        duplicate_roots=self._default_dupe_roots())
+        return self._ok(
+            volumes=list_volumes(),
+            history=self._space_log.summary(30),
+            analysis=self._analysis.to_dict() if self._analysis else None,
+            busy=self._busy,
+            duplicate_roots=self._default_dupe_roots(),
+        )
 
     @_guard
     def analyze(self) -> dict[str, Any]:
@@ -367,8 +383,13 @@ class Api:
         finally:
             self._end()
         self._analysis = analysis
-        log.info("analysis: %d groups, safe %s, review %s in %.1fs", len(analysis.groups), human_size(analysis.total("safe")),
-                 human_size(analysis.total("review")), analysis.duration)
+        log.info(
+            "analysis: %d groups, safe %s, review %s in %.1fs",
+            len(analysis.groups),
+            human_size(analysis.total("safe")),
+            human_size(analysis.total("review")),
+            analysis.duration,
+        )
         return self._ok(analysis=analysis.to_dict(), volumes=list_volumes())
 
     @_guard
@@ -387,8 +408,16 @@ class Api:
         groups_all = list(groups_all or [])
         paths = list(paths or [])
         try:
-            result = execute_clean(self._analysis, groups_all, paths, permanent_review=perm, log=self._space_log,
-                                   progress=lambda p: self._emit("clean_progress", p), cancel=self._cancel, trigger="gui")
+            result = execute_clean(
+                self._analysis,
+                groups_all,
+                paths,
+                permanent_review=perm,
+                log=self._space_log,
+                progress=lambda p: self._emit("clean_progress", p),
+                cancel=self._cancel,
+                trigger="gui",
+            )
         except Cancelled:
             return self._err("cancelled")
         finally:
@@ -407,6 +436,7 @@ class Api:
                 if selected and item.kind in ("contents", "recycle_bin"):
                     # partially emptied: re-measure what is left
                     from ..space.common import path_size
+
                     size, count = path_size(item.path) if item.kind == "contents" else (0, 0)
                     if size <= 0:
                         continue
@@ -415,7 +445,9 @@ class Api:
             g.items = keep
         self._analysis.groups = [g for g in self._analysis.groups if g.items]
         log.info("clean %s: freed %s, removed %d, failed %d", result.clean_id, human_size(result.freed), result.removed, len(result.failed))
-        return self._ok(result=result.to_dict(), analysis=self._analysis.to_dict(), volumes=list_volumes(), human_freed=human_size(result.freed))
+        return self._ok(
+            result=result.to_dict(), analysis=self._analysis.to_dict(), volumes=list_volumes(), human_freed=human_size(result.freed)
+        )
 
     @_guard
     def scan_folder(self, path: str | None = None, depth: int = 2) -> dict[str, Any]:
@@ -426,8 +458,12 @@ class Api:
         if err:
             return self._err(err)
         try:
-            self._scan = scan_tree(target, cancel=self._cancel, progress=lambda p: self._emit("scan_progress", p),
-                                   exclude_names={"$RECYCLE.BIN", "System Volume Information"})
+            self._scan = scan_tree(
+                target,
+                cancel=self._cancel,
+                progress=lambda p: self._emit("scan_progress", p),
+                exclude_names={"$RECYCLE.BIN", "System Volume Information"},
+            )
         except Cancelled:
             return self._err("cancelled")
         finally:
@@ -462,7 +498,7 @@ class Api:
         except OSError as exc:
             return self._err(str(exc))
         rows.sort(key=lambda r: -r["size"])
-        return self._ok(files=rows[:int(limit)], total=len(rows))
+        return self._ok(files=rows[: int(limit)], total=len(rows))
 
     @_guard
     def find_duplicates(self, roots: list[str] | None = None, min_mb: float | None = None) -> dict[str, Any]:
@@ -474,13 +510,23 @@ class Api:
         if err:
             return self._err(err)
         try:
-            self._dupes = find_duplicates(roots, min_bytes=int(mb * 1024 * 1024), exclude_names=set(self._cfg.space.exclude),
-                                          cancel=self._cancel, progress=lambda p: self._emit("dupes_progress", p))
+            self._dupes = find_duplicates(
+                roots,
+                min_bytes=int(mb * 1024 * 1024),
+                exclude_names=set(self._cfg.space.exclude),
+                cancel=self._cancel,
+                progress=lambda p: self._emit("dupes_progress", p),
+            )
         except Cancelled:
             return self._err("cancelled")
         finally:
             self._end()
-        log.info("duplicates: %d groups, %s reclaimable in %.1fs", len(self._dupes.groups), human_size(self._dupes.reclaimable), self._dupes.duration)
+        log.info(
+            "duplicates: %d groups, %s reclaimable in %.1fs",
+            len(self._dupes.groups),
+            human_size(self._dupes.reclaimable),
+            self._dupes.duration,
+        )
         return self._ok(dupes=self._dupes.to_dict())
 
     @_guard
@@ -494,8 +540,9 @@ class Api:
                 g.files = [f for f in g.files if os.path.normcase(f.path) not in gone]
             self._dupes.groups = [g for g in self._dupes.groups if len(g.files) > 1]
         log.info("remove_paths(%s): freed %s, removed %d, failed %d", label, human_size(result.freed), result.removed, len(result.failed))
-        return self._ok(result=result.to_dict(), human_freed=human_size(result.freed),
-                        dupes=self._dupes.to_dict() if self._dupes is not None else None)
+        return self._ok(
+            result=result.to_dict(), human_freed=human_size(result.freed), dupes=self._dupes.to_dict() if self._dupes is not None else None
+        )
 
     @_guard
     def space_history(self, days: int = 30) -> dict[str, Any]:
