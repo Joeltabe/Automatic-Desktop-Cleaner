@@ -1,4 +1,5 @@
 """Volumes and their usage."""
+
 from __future__ import annotations
 
 import ctypes
@@ -33,15 +34,19 @@ def _win_volumes() -> list[dict[str, Any]]:
             usage = shutil.disk_usage(root)
         except OSError:
             continue
-        out.append({
-            "path": root,
-            "label": label or ("Windows" if letter.upper() == system_drive else "Local Disk"),
-            "kind": {2: "removable", 3: "fixed", 4: "network"}[kind],
-            "fs": fs_buf.value if ok else "",
-            "total": usage.total, "used": usage.used, "free": usage.free,
-            "is_system": letter.upper() == system_drive,
-            "is_home": letter.upper() == home_drive,
-        })
+        out.append(
+            {
+                "path": root,
+                "label": label or ("Windows" if letter.upper() == system_drive else "Local Disk"),
+                "kind": {2: "removable", 3: "fixed", 4: "network"}[kind],
+                "fs": fs_buf.value if ok else "",
+                "total": usage.total,
+                "used": usage.used,
+                "free": usage.free,
+                "is_system": letter.upper() == system_drive,
+                "is_home": letter.upper() == home_drive,
+            }
+        )
     return out
 
 
@@ -59,8 +64,19 @@ def _posix_volumes() -> list[dict[str, Any]]:
         if usage.total == 0:
             return
         seen.add(mount)
-        out.append({"path": mount, "label": label, "kind": kind, "fs": "", "total": usage.total, "used": usage.used,
-                    "free": usage.free, "is_system": mount == "/", "is_home": False})
+        out.append(
+            {
+                "path": mount,
+                "label": label,
+                "kind": kind,
+                "fs": "",
+                "total": usage.total,
+                "used": usage.used,
+                "free": usage.free,
+                "is_system": mount == "/",
+                "is_home": False,
+            }
+        )
 
     add("/", "System")
     if IS_MAC:
@@ -71,7 +87,7 @@ def _posix_volumes() -> list[dict[str, Any]]:
                     add(str(v), v.name, "removable")
     else:
         try:
-            with open("/proc/mounts", "r", encoding="utf-8") as fh:
+            with open("/proc/mounts", encoding="utf-8") as fh:
                 for line in fh:
                     parts = line.split()
                     if len(parts) < 3:
